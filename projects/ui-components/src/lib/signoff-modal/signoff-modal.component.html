@@ -1,0 +1,42 @@
+<div *ngIf="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
+  <div class="bg-white rounded border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden">
+    <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <lucide-icon [img]="ShieldCheck" class="w-5 h-5 text-emerald-600"></lucide-icon>
+        <h3 class="text-sm font-bold text-slate-900">Attending Physician Sign-off &amp; Attestation</h3>
+      </div>
+      <button (click)="closeModal.emit()" class="p-1 rounded text-slate-400 hover:text-slate-700 cursor-pointer">
+        <lucide-icon [img]="X" class="w-4 h-4"></lucide-icon>
+      </button>
+    </div>
+    <div class="p-5 space-y-4 text-xs text-slate-800">
+      <div class="p-3 bg-slate-50 border border-slate-200 rounded">
+        <p class="font-semibold text-slate-900">Patient: {{ patient?.fullName }}</p>
+        <p class="text-slate-600 font-mono text-[11px] mt-0.5">MRN: {{ patient?.mrn }} • Encounter: {{ patient?.encounterType }}</p>
+      </div>
+      <div>
+        <label class="block text-slate-700 font-semibold mb-1">Attending Physician Signature</label>
+        <input type="text" [(ngModel)]="physicianName" class="w-full text-xs p-2 bg-white border border-slate-300 rounded font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-teal-600">
+      </div>
+      <div>
+        <label class="block text-slate-700 font-semibold mb-1">National Provider Identifier (NPI)</label>
+        <input type="text" [(ngModel)]="npiNumber" class="w-full text-xs p-2 bg-white border border-slate-300 rounded font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-teal-600">
+      </div>
+      <div class="border border-slate-200 rounded p-3 bg-amber-50/50 text-slate-700 space-y-2">
+        <div class="flex items-start gap-2">
+          <input type="checkbox" [(ngModel)]="confirmedCheck" class="mt-0.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer">
+          <label class="text-[11px] leading-relaxed cursor-pointer select-none">
+            <strong>Legal Medical Attestation:</strong> I attest that I have personally evaluated the patient, reviewed this ambiently generated clinical documentation, reconciled all diagnoses and prescriptions, and authorize this record for submission into the hospital Electronic Health Record (EHR).
+          </label>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
+        <button (click)="closeModal.emit()" class="px-3 py-1.5 rounded border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium cursor-pointer">Cancel</button>
+        <button (click)="handleSubmit()" [disabled]="!confirmedCheck" class="px-4 py-1.5 rounded bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs">
+          <lucide-icon [img]="FileCheck" class="w-3.5 h-3.5 text-teal-300"></lucide-icon>
+          <span>Confirm &amp; Finalize Note</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

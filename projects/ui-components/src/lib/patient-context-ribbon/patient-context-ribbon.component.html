@@ -1,0 +1,52 @@
+<div class="flex-1 flex flex-col h-full bg-slate-50 relative">
+  
+  <!-- HIPAA Privacy Toggle -->
+  <button (click)="togglePrivacy.emit()" class="absolute top-4 right-4 text-[10px] flex items-center gap-1.5 px-2 py-1.5 rounded border transition-colors z-10 font-bold uppercase tracking-widest cursor-pointer shadow-sm"
+    [ngClass]="privacyMode ? 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'">
+    <lucide-icon [img]="privacyMode ? EyeOff : Eye" class="w-3.5 h-3.5"></lucide-icon>
+    {{ privacyMode ? 'PHI Hidden' : 'Mask PHI' }}
+  </button>
+
+  <!-- Active Patient Profile -->
+  <div class="p-6 border-b border-slate-200 bg-white relative pt-12">
+    <div class="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 mb-4 flex items-center justify-center shadow-sm">
+       <lucide-icon [img]="User" class="w-6 h-6 text-slate-400"></lucide-icon>
+    </div>
+    <h2 class="text-[17px] font-bold text-slate-900 leading-tight mb-1 transition-all duration-300" [class.blur-md]="privacyMode" [class.select-none]="privacyMode">{{ currentEncounter.patient.fullName }}</h2>
+    <div class="text-[11px] font-mono text-teal-600 font-medium mb-5 transition-all duration-300" [class.blur-md]="privacyMode" [class.select-none]="privacyMode">{{ currentEncounter.patient.mrn }}</div>
+    
+    <div class="space-y-2.5 text-xs text-slate-600">
+      <div class="flex justify-between items-center"><span class="text-slate-400 font-medium">DOB</span> <span class="font-semibold text-slate-800 transition-all duration-300" [class.blur-md]="privacyMode" [class.select-none]="privacyMode">{{ currentEncounter.patient.dob }}</span></div>
+      <div class="flex justify-between items-center"><span class="text-slate-400 font-medium">Gender</span> <span class="font-semibold text-slate-800">{{ currentEncounter.patient.gender }}</span></div>
+      <div class="flex justify-between items-center"><span class="text-slate-400 font-medium">Age</span> <span class="font-semibold text-slate-800">{{ currentEncounter.patient.age }} yrs</span></div>
+    </div>
+  </div>
+
+  <!-- Allergies -->
+  <div class="px-6 py-5 border-b border-slate-200 bg-white">
+     <h3 class="text-[9px] uppercase font-bold tracking-widest text-slate-400 mb-3">Safety Alerts</h3>
+     <div *ngIf="currentEncounter.patient.allergies?.length > 0; else noAllergies" class="bg-rose-50 text-rose-800 p-3 rounded-md border border-rose-100 text-xs font-medium leading-relaxed">
+        <lucide-icon [img]="AlertTriangle" class="w-4 h-4 inline-block mr-1.5 text-rose-500 align-text-bottom"></lucide-icon>
+        <span [class.blur-sm]="privacyMode" class="transition-all duration-300 inline-block">{{ currentEncounter.patient.allergies.join('; ') }}</span>
+     </div>
+     <ng-template #noAllergies>
+        <div class="bg-slate-50 text-slate-500 p-3 rounded-md border border-slate-200 text-xs font-medium flex items-center">
+           <lucide-icon [img]="ShieldAlert" class="w-4 h-4 mr-2 text-slate-400"></lucide-icon>
+           No Known Drug Allergies
+        </div>
+     </ng-template>
+  </div>
+
+  <!-- Encounter Selector -->
+  <div class="p-6 flex-1 overflow-y-auto">
+     <h3 class="text-[9px] uppercase font-bold tracking-widest text-slate-400 mb-3">Clinical Encounters</h3>
+     <div class="space-y-1.5">
+        <button *ngFor="let enc of availableEncounters" (click)="selectEncounter.emit(enc.id)"
+          class="w-full text-left px-3 py-2.5 rounded-md text-xs transition-all cursor-pointer group relative"
+          [ngClass]="enc.id === currentEncounter.id ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-slate-200' : 'hover:bg-slate-200/50 border border-transparent'">
+          <div class="font-semibold mb-0.5 truncate transition-all duration-300" [class.blur-sm]="privacyMode" [ngClass]="enc.id === currentEncounter.id ? 'text-teal-700' : 'text-slate-700 group-hover:text-slate-900'">{{ enc.title }}</div>
+          <div class="text-[10px] truncate" [ngClass]="enc.id === currentEncounter.id ? 'text-slate-500' : 'text-slate-400'">{{ enc.patient.department }}</div>
+        </button>
+     </div>
+  </div>
+</div>

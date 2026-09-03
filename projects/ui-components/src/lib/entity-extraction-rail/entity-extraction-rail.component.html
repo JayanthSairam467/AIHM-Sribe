@@ -1,0 +1,64 @@
+<div class="flex flex-col h-full bg-white">
+  <div class="p-3 border-b border-slate-200 bg-slate-50">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Extracted Clinical Entities</h2>
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white text-slate-700 border border-slate-200 font-semibold">{{ entities.length }} items</span>
+      </div>
+      <span class="text-[10px] text-slate-500 font-medium">ICD-10-CM • RxNorm • SNOMED CT</span>
+    </div>
+    <div class="flex flex-wrap gap-1">
+      <button *ngFor="let cat of categories" (click)="activeCategory = cat.id"
+        [ngClass]="activeCategory === cat.id ? 'bg-slate-900 text-white border-slate-900 font-semibold' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+        class="text-[11px] px-2 py-0.5 rounded border transition-all cursor-pointer flex items-center gap-1">
+        <span>{{ cat.label }}</span>
+        <span [ngClass]="activeCategory === cat.id ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-600'" class="text-[9px] px-1 rounded font-mono">{{ getCategoryCount(cat.id) }}</span>
+      </button>
+    </div>
+  </div>
+  <div class="flex-1 overflow-y-auto p-3 space-y-2">
+    <div *ngIf="filteredEntities.length === 0" class="text-center py-8 text-slate-400 text-xs">No entities match current category filter.</div>
+    <div *ngFor="let entity of filteredEntities" (click)="selectEntity.emit(entity.id)"
+      [ngClass]="selectedEntityId === entity.id ? 'border-teal-600 ring-1 ring-teal-600 bg-teal-50/20' : 'border-slate-200 hover:border-slate-300 bg-white'"
+      class="p-2.5 rounded border text-xs transition-all cursor-pointer">
+      <div class="flex items-start justify-between gap-2 mb-1">
+        <div>
+          <span class="font-semibold text-slate-900 block leading-tight">{{ entity.term }}</span>
+          <div class="flex items-center gap-1.5 mt-1">
+            <span [ngClass]="getCategoryBadgeClass(entity.category)" class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border">{{ entity.code }}</span>
+            <span class="text-[10px] text-slate-500 font-mono">{{ entity.system }}</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button (click)="$event.stopPropagation(); toggleEntityVerification.emit(entity.id)"
+            [ngClass]="entity.status === 'verified' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'"
+            class="p-1 rounded text-[10px] font-medium border transition-colors cursor-pointer">
+            <lucide-icon [img]="CheckCircle2" class="w-3.5 h-3.5"></lucide-icon>
+          </button>
+          <button (click)="handleCopyCode(entity, $event)"
+            class="p-1 rounded text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-transparent transition-colors cursor-pointer">
+            <lucide-icon *ngIf="copiedId !== entity.id" [img]="Copy" class="w-3.5 h-3.5"></lucide-icon>
+            <lucide-icon *ngIf="copiedId === entity.id" [img]="Check" class="w-3.5 h-3.5 text-emerald-600"></lucide-icon>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 text-[11px]">
+        <div class="flex items-center gap-2 text-slate-500">
+          <span class="flex items-center gap-0.5 font-mono text-[10px]">
+            <lucide-icon [img]="Clock" class="w-3 h-3 text-slate-400"></lucide-icon>{{ entity.timestamp }}
+          </span>
+          <span class="text-[9px] font-bold text-slate-500 border border-slate-200 px-1 py-0.5 rounded-sm flex items-center gap-1 shadow-sm" title="NIST AI RMF Confidence Score">
+             <lucide-icon [img]="Target" class="w-2.5 h-2.5 text-teal-600"></lucide-icon>
+             {{ (entity.confidence * 100) | number:'1.0-0' }}%
+          </span>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="text-[10px] text-slate-600">Insert:</span>
+          <button (click)="$event.stopPropagation(); insertEntityToSoap.emit({entity: entity, section: 'assessment'})" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium cursor-pointer">[A]</button>
+          <button (click)="$event.stopPropagation(); insertEntityToSoap.emit({entity: entity, section: 'plan'})" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium cursor-pointer">[P]</button>
+          <button (click)="$event.stopPropagation(); insertEntityToSoap.emit({entity: entity, section: 'subjective'})" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium cursor-pointer">[S]</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

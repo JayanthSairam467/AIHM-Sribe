@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Clinical Base Styles */
+body {
+  @apply bg-slate-50 text-slate-800 font-sans antialiased;
+}
+
+/* Ensure no default focus rings are too wild */
+*:focus-visible {
+  @apply outline-none ring-2 ring-clinical-500 ring-offset-2 ring-offset-white;
+}

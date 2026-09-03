@@ -1,0 +1,57 @@
+<div class="bg-white px-4 py-3 flex items-center justify-between border-b border-slate-200">
+  
+  <!-- Left: Controls -->
+  <div class="flex items-center gap-2.5 shrink-0">
+    <!-- Main Toggle -->
+    <ng-container *ngIf="captureMode === 'simulation'">
+      <button (click)="toggleSimulation.emit()"
+        class="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer border shadow-sm shrink-0"
+        [ngClass]="isSimulating ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100' : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'">
+        <lucide-icon [img]="isSimulating ? Pause : Play" class="w-4 h-4 fill-current ml-0.5" [class.ml-0]="isSimulating"></lucide-icon>
+      </button>
+    </ng-container>
+    <ng-container *ngIf="captureMode === 'microphone'">
+      <button (click)="toggleRecording.emit()"
+        class="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer border shadow-sm shrink-0"
+        [ngClass]="isRecording ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 animate-pulse' : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'">
+        <lucide-icon [img]="isRecording ? MicOff : Mic" class="w-4 h-4"></lucide-icon>
+      </button>
+    </ng-container>
+    <ng-container *ngIf="captureMode === 'upload'">
+      <button onclick="document.getElementById('audio-upload').click()"
+        class="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer border shadow-sm shrink-0 bg-blue-600 text-white border-blue-700 hover:bg-blue-700">
+        <lucide-icon [img]="Upload" class="w-4 h-4"></lucide-icon>
+      </button>
+      <input type="file" id="audio-upload" class="hidden" accept="audio/*" (change)="toggleSimulation.emit()">
+    </ng-container>
+
+    <!-- Transport Controls -->
+    <div class="flex items-center gap-1">
+      <button (click)="resetStream.emit()" class="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0" title="Restart">
+        <lucide-icon [img]="RotateCcw" class="w-3.5 h-3.5"></lucide-icon>
+      </button>
+      <button (click)="fastForwardAll.emit()" class="w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0" title="Fast Forward">
+        <lucide-icon [img]="FastForward" class="w-3.5 h-3.5"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Mode Switcher -->
+    <div class="flex items-center bg-slate-100 p-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase border border-slate-200 shadow-inner shrink-0">
+      <button (click)="changeCaptureMode.emit('upload')" [ngClass]="captureMode === 'upload' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-2 py-0.5 rounded transition-colors cursor-pointer">File</button>
+      <button (click)="changeCaptureMode.emit('simulation')" [ngClass]="captureMode === 'simulation' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-2 py-0.5 rounded transition-colors cursor-pointer">Sim</button>
+      <button (click)="changeCaptureMode.emit('microphone')" [ngClass]="captureMode === 'microphone' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-2 py-0.5 rounded transition-colors cursor-pointer">Live</button>
+    </div>
+  </div>
+
+  <!-- Right: Status -->
+  <div class="flex items-center bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200 shrink-0">
+    <div class="relative flex h-2 w-2 mr-2">
+      <span *ngIf="isRecording || isSimulating" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2 w-2" [ngClass]="isRecording || isSimulating ? 'bg-rose-500' : 'bg-slate-300'"></span>
+    </div>
+    <div class="flex flex-col items-start border-l border-slate-200 pl-2.5">
+      <span class="font-mono text-sm font-bold tracking-wider text-slate-900 leading-none mb-0.5">{{ formatTime(timerSeconds) }}</span>
+      <span class="text-[8px] text-slate-500 uppercase tracking-widest font-bold leading-none">Turns: {{ activeUtteranceCount }}/{{ totalUtteranceCount }}</span>
+    </div>
+  </div>
+</div>

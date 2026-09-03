@@ -1,0 +1,279 @@
+<ng-container *ngIf="isLoggedIn; else loginPage">
+<div class="h-screen w-full flex flex-col bg-slate-50 font-sans overflow-hidden relative">
+  <!-- Top Header -->
+  <lib-header-bar class="shrink-0 relative z-20" (logout)="handleLogout()" (openArchitectureSpec)="isArchModalOpen = true"></lib-header-bar>
+
+  <!-- Main Three-Pane Workspace -->
+  <div class="flex-1 w-full flex overflow-hidden">
+      <!-- Left Pane (Patient Context & Clinical Encounters) -->
+      <aside class="w-[280px] shrink-0 bg-white border-r border-slate-200 flex flex-col h-full relative z-20">
+        <!-- Vertical Patient Context -->
+        <lib-patient-context-ribbon
+          [availableEncounters]="encounters"
+          [currentEncounter]="activeEncounter"
+          [privacyMode]="privacyMode"
+          (togglePrivacy)="privacyMode = !privacyMode"
+          (selectEncounter)="handleSelectEncounter($event)"
+          class="flex-1 overflow-y-auto block">
+        </lib-patient-context-ribbon>
+      </aside>
+
+      <!-- Middle Pane (Audio & Transcript/Entities) -->
+      <section class="w-[380px] flex flex-col border-r border-slate-200 bg-white shrink-0 z-30 shadow-[4px_0_24px_-4px_rgba(0,0,0,0.05)] h-full">
+         <div class="shrink-0">
+            <lib-audio-capture-bar
+              [captureMode]="captureMode"
+              [isRecording]="isRecording"
+              [isSimulating]="isSimulating"
+              [timerSeconds]="timerSeconds"
+              (toggleSimulation)="handleToggleSimulation()"
+              (toggleRecording)="handleToggleRecording()"
+              (fastForwardAll)="handleFastForwardAll()"
+              (resetStream)="handleResetStream()"
+              (changeCaptureMode)="changeCaptureMode($event)"
+              class="block">
+            </lib-audio-capture-bar>
+         </div>
+
+         <!-- Segmented Tabs (Sleek Underline Style) -->
+         <div class="px-5 border-b border-slate-200 bg-slate-50 flex gap-6 shrink-0 relative">
+            <button (click)="leftRailTab = 'transcript'"
+               [ngClass]="leftRailTab === 'transcript' ? 'text-slate-900 font-bold border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'"
+               class="py-3 text-[11px] uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer relative top-[1px]">
+               Transcript
+               <span class="px-1 py-0.5 rounded text-[9px] font-mono" [ngClass]="leftRailTab === 'transcript' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-500'">{{ visibleUtterances.length }}</span>
+            </button>
+            <button (click)="leftRailTab = 'entities'"
+               [ngClass]="leftRailTab === 'entities' ? 'text-slate-900 font-bold border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'"
+               class="py-3 text-[11px] uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer relative top-[1px]">
+               Clinical Entities
+               <span class="px-1 py-0.5 rounded text-[9px] font-mono" [ngClass]="leftRailTab === 'entities' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-500'">{{ entities.length }}</span>
+            </button>
+         </div>
+
+         <div class="flex-1 w-full relative overflow-hidden bg-white">
+            <div *ngIf="leftRailTab === 'transcript'" class="absolute inset-0 flex flex-col">
+              <lib-transcription-panel 
+                 class="block w-full h-full"
+                 [utterances]="visibleUtterances" 
+                 [selectedEntityId]="selectedEntityId" 
+                 [isStreaming]="isRecording || isSimulating"
+                 (selectEntity)="selectEntity($event)"
+                 (addPrivateNote)="handleAddPrivateNote($event)">
+              </lib-transcription-panel>
+            </div>
+            <div *ngIf="leftRailTab === 'entities'" class="absolute inset-0 flex flex-col">
+              <lib-entity-extraction-rail 
+                 class="block w-full h-full"
+                 [entities]="entities" 
+                 [selectedEntityId]="selectedEntityId" 
+                 (selectEntity)="selectEntity($event)" 
+                 (insertEntityToSoap)="handleInsertEntityToSoap($event)" 
+                 (toggleEntityVerification)="handleToggleEntityVerification($event)">
+              </lib-entity-extraction-rail>
+            </div>
+         </div>
+      </section>
+
+      <!-- Right Pane (SOAP Document) -->
+      <main class="flex-1 min-w-0 flex flex-col bg-slate-50 relative z-10 h-full overflow-hidden">
+          <div class="flex-1 w-full relative overflow-hidden">
+            <lib-soap-editor
+              class="block w-full h-full"
+              [soapNote]="soapNote"
+              [patient]="activeEncounter.patient"
+              [isGenerating]="isGenerating"
+              [privacyMode]="privacyMode"
+              (updateSoapNote)="handleUpdateSoapNote($event)"
+              (openRefineModal)="handleOpenRefineModal($event)"
+              (openSignoffModal)="isSignoffModalOpen = true"
+              (regenerateNote)="handleRegenerateNote()"
+              (openFhirModal)="isFhirModalOpen = true">
+            </lib-soap-editor>
+          </div>
+
+          <!-- IMDRF SaMD Disclaimer Footer -->
+          <div class="h-6 bg-slate-900/5 backdrop-blur-[2px] border-t border-slate-200 flex items-center justify-center pointer-events-none z-30 shrink-0">
+            <span class="text-[9px] font-mono text-slate-500 uppercase tracking-widest font-semibold flex items-center gap-2">
+              <span>SaMD v1.0.4</span>
+              <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+              <span>UDI-DI: 08465548</span>
+              <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+              <span>CDS System - Not for primary diagnostic use</span>
+            </span>
+          </div>
+      </main>
+  </div>
+</div>
+
+<!-- Modals -->
+<lib-signoff-modal
+  [isOpen]="isSignoffModalOpen"
+  [patient]="activeEncounter.patient"
+  (closeModal)="isSignoffModalOpen = false"
+  (confirmSignoff)="handleConfirmSignoff($event)">
+</lib-signoff-modal>
+
+<lib-refine-section-modal
+  [isOpen]="refineModalState.isOpen"
+  [sectionKey]="refineModalState.sectionKey"
+  [sectionTitle]="refineModalState.sectionTitle"
+  [currentContent]="refineModalState.currentText"
+  (closeModal)="refineModalState.isOpen = false"
+  (applyRefinedContent)="handleApplyRefinedContent($event)">
+</lib-refine-section-modal>
+
+<!-- FHIR Export Modal -->
+<div *ngIf="isFhirModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+  <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-full flex flex-col overflow-hidden border border-slate-200">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+      <div>
+         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+            HL7 FHIR R4 Export
+         </h2>
+         <p class="text-[11px] text-slate-500 mt-0.5">Resource: DocumentReference (mapped to USCDI standards)</p>
+      </div>
+      <button (click)="isFhirModalOpen = false" class="p-2 rounded-md hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="p-0 overflow-y-auto bg-slate-900 flex-1">
+      <pre class="text-[11px] text-teal-400 font-mono p-5 whitespace-pre-wrap"><code>{{ fhirPayload }}</code></pre>
+    </div>
+    <div class="px-5 py-4 border-t border-slate-100 bg-white flex justify-end">
+      <button (click)="isFhirModalOpen = false" class="px-5 py-2 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer">Done</button>
+    </div>
+  </div>
+</div>
+<!-- Architecture Modal -->
+<div *ngIf="isArchModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+  <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-full flex flex-col overflow-hidden border border-slate-200">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+      <div>
+         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            System Architecture & Design Tokens
+         </h2>
+         <p class="text-xs text-slate-500 mt-0.5">Healthcare IT Infrastructure Overview (Demo)</p>
+      </div>
+      <button (click)="isArchModalOpen = false" class="p-2 rounded-md hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    
+    <div class="p-6 overflow-y-auto bg-slate-50 flex-1 space-y-6">
+       <!-- Diagram -->
+       <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+          <h3 class="font-bold text-slate-700 uppercase tracking-widest text-xs mb-4">ScribeOS Data Flow Diagram</h3>
+          <div class="flex items-center justify-center gap-4 text-xs font-semibold text-slate-600 text-center flex-wrap">
+             <div class="border-2 border-blue-200 bg-blue-50 p-4 rounded-xl w-40">
+                <div class="text-2xl mb-2">🎤</div>
+                <div>Web Speech API</div>
+                <div class="text-[10px] font-normal text-slate-500 mt-1">Live Audio Stream</div>
+             </div>
+             <div class="text-slate-400">➡️</div>
+             <div class="border-2 border-purple-200 bg-purple-50 p-4 rounded-xl w-40">
+                <div class="text-2xl mb-2">🧠</div>
+                <div>Angular Core</div>
+                <div class="text-[10px] font-normal text-slate-500 mt-1">State Mgmt & Components</div>
+             </div>
+             <div class="text-slate-400">➡️</div>
+             <div class="border-2 border-emerald-200 bg-emerald-50 p-4 rounded-xl w-40">
+                <div class="text-2xl mb-2">⚡</div>
+                <div>Gemini GenAI</div>
+                <div class="text-[10px] font-normal text-slate-500 mt-1">Clinical Note Synthesis</div>
+             </div>
+             <div class="text-slate-400">➡️</div>
+             <div class="border-2 border-amber-200 bg-amber-50 p-4 rounded-xl w-40">
+                <div class="text-2xl mb-2">📄</div>
+                <div>FHIR R4 Gateway</div>
+                <div class="text-[10px] font-normal text-slate-500 mt-1">EHR Sync / USCDI</div>
+             </div>
+          </div>
+       </div>
+
+       <div class="grid grid-cols-2 gap-6">
+          <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+             <h3 class="font-bold text-slate-700 uppercase tracking-widest text-xs mb-3">Tech Stack</h3>
+             <ul class="space-y-2 text-sm text-slate-600">
+                <li class="flex items-center gap-2">✅ <span class="font-bold">Frontend:</span> Angular v17, TailwindCSS</li>
+                <li class="flex items-center gap-2">✅ <span class="font-bold">Icons:</span> Lucide Angular</li>
+                <li class="flex items-center gap-2">✅ <span class="font-bold">Live STT:</span> Web Speech API (Native)</li>
+                <li class="flex items-center gap-2">✅ <span class="font-bold">Generative Engine:</span> Google Gemini Pro</li>
+                <li class="flex items-center gap-2">✅ <span class="font-bold">Data Standards:</span> HL7 FHIR R4, USCDI</li>
+             </ul>
+          </div>
+          <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+             <h3 class="font-bold text-slate-700 uppercase tracking-widest text-xs mb-3">Compliance & Security</h3>
+             <ul class="space-y-2 text-sm text-slate-600">
+                <li class="flex items-center gap-2">🛡️ <span class="font-bold">HIPAA:</span> PHI Masking, Encrypted Audit Trails</li>
+                <li class="flex items-center gap-2">🏥 <span class="font-bold">IMDRF:</span> CDS System v1.0.4 Validation</li>
+                <li class="flex items-center gap-2">📋 <span class="font-bold">NIST AI RMF:</span> Risk Management Compliant</li>
+                <li class="flex items-center gap-2">💡 <span class="font-bold">AHRQ:</span> Clinical Decision Support (CDS) Triggers</li>
+             </ul>
+          </div>
+       </div>
+    </div>
+    
+    <div class="px-5 py-4 border-t border-slate-100 bg-white flex justify-end">
+      <button (click)="isArchModalOpen = false" class="px-5 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer">Close Overview</button>
+    </div>
+  </div>
+</div>
+
+</ng-container>
+
+<!-- LOGIN PAGE -->
+<ng-template #loginPage>
+  <div class="h-screen w-screen bg-slate-50 flex items-center justify-center relative overflow-hidden font-sans">
+    
+    <!-- Login Card -->
+    <div class="w-full max-w-md p-8 bg-white border border-slate-200 rounded-2xl shadow-xl relative z-10 flex flex-col items-center">
+      
+      <!-- Logo -->
+      <div class="w-12 h-12 bg-blue-600 rounded-[8px] flex items-center justify-center mb-6 shadow-sm">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+      </div>
+      
+      <h1 class="text-3xl font-bold text-slate-900 tracking-tight mb-2">Scribe<span class="font-normal text-slate-500">OS</span></h1>
+      <p class="text-slate-500 text-sm mb-8 text-center">Sign in to your clinical workspace</p>
+      
+      <form class="w-full space-y-4" (submit)="handleLogin($event)">
+        <!-- Error Banner -->
+        <div *ngIf="loginError" class="bg-rose-50 border border-rose-200 text-rose-700 font-medium text-xs p-3 rounded-md mb-4 text-center">
+          Invalid credentials. Please use a recognized institutional email.
+        </div>
+        
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Institutional Email</label>
+          <input type="email" [(ngModel)]="loginEmail" name="email" placeholder="e.g. dr.sarah&#64;scribe.ai" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" required />
+        </div>
+        
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Password</label>
+          <input type="password" [(ngModel)]="loginPassword" name="password" placeholder="••••••••" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" required />
+        </div>
+        
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition-colors mt-6 cursor-pointer">
+          Sign In securely
+        </button>
+      </form>
+      
+      <!-- Demo Data Tooltip -->
+      <div class="mt-8 pt-6 border-t border-slate-100 w-full">
+        <h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3 text-center">Demo Credentials</h3>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 text-center">
+            <div class="text-slate-700 font-bold mb-0.5">Doctor</div>
+            <div class="text-slate-500 font-mono text-[10px]">dr.sarah&#64;scribe.ai</div>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 text-center">
+            <div class="text-slate-700 font-bold mb-0.5">Administrator</div>
+            <div class="text-slate-500 font-mono text-[10px]">admin&#64;scribe.ai</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>

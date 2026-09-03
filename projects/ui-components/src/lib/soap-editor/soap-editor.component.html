@@ -1,0 +1,210 @@
+<div class="flex flex-col h-full bg-slate-100 relative">
+  <!-- Minimalist Header -->
+  <div class="min-h-[56px] py-2 px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-white z-20 shadow-sm">
+     <div class="text-[11px] font-medium text-slate-500 flex flex-wrap items-center gap-2.5">
+        <span *ngIf="soapNote?.isSigned" class="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold"><lucide-icon [img]="CheckCircle2" class="w-3.5 h-3.5"></lucide-icon> Signed & Finalized</span>
+        <span *ngIf="!soapNote?.isSigned" class="flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-semibold"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Draft Mode</span>
+        <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+        <span>Auto-saved {{ soapNote?.lastUpdated || 'Just now' }}</span>
+     </div>
+     <div class="flex flex-wrap items-center gap-2">
+        <button (click)="openFhirModal.emit()" class="text-xs px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
+           <lucide-icon [img]="FileJson" class="w-4 h-4 text-blue-600"></lucide-icon> FHIR R4
+        </button>
+        <button (click)="regenerateNote.emit()" [disabled]="isGenerating" class="text-xs px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
+           <lucide-icon [img]="RefreshCw" [ngClass]="isGenerating ? 'animate-spin' : ''" class="w-4 h-4"></lucide-icon> Regenerate
+        </button>
+        <button (click)="handleCopyForEhr()" class="text-xs px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
+           <lucide-icon [img]="copySuccess ? Check : Copy" [ngClass]="copySuccess ? 'text-emerald-500' : ''" class="w-4 h-4"></lucide-icon> {{ copySuccess ? 'Copied' : 'Copy to EHR' }}
+        </button>
+        <button *ngIf="!soapNote?.isSigned" (click)="openSignoffModal.emit()" class="text-xs px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition-colors cursor-pointer ml-2">
+           Sign Note
+        </button>
+     </div>
+  </div>
+
+  <!-- Document Body (Modern UI Form) -->
+  <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      
+      <!-- Patient Summary Strip -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex items-center justify-between">
+         <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg">
+               {{ patient.fullName.charAt(0) }}
+            </div>
+            <div>
+               <h2 class="font-bold text-slate-900 leading-tight">{{ patient.fullName }}</h2>
+               <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                  <span class="font-mono">MRN: {{ patient.mrn }}</span>
+                  <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                  <span>{{ patient.age }}y {{ patient.gender }}</span>
+               </div>
+            </div>
+         </div>
+         <div class="text-right text-xs text-slate-500">
+            <div><span class="font-semibold text-slate-700">Encounter:</span> Primary Care (2026-09-03)</div>
+            <div><span class="font-semibold text-slate-700">Provider:</span> {{ patient.primaryCareProvider }}</div>
+         </div>
+      </div>
+
+      <!-- SUBJECTIVE -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group">
+         <div class="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+               <span class="w-6 h-6 rounded bg-blue-100 text-blue-700 flex items-center justify-center text-xs">S</span>
+               Subjective
+            </h3>
+            <button (click)="openRefineModal.emit({key:'subjective', title:'Subjective', text: soapNote.subjective?.historyOfPresentIllness})" class="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-blue-600 bg-white border border-blue-200 hover:bg-blue-50 px-2 py-1 rounded transition-all cursor-pointer flex items-center gap-1">
+               <lucide-icon [img]="Sparkles" class="w-3 h-3"></lucide-icon> AI Refine
+            </button>
+         </div>
+         <div class="p-5 space-y-4">
+            <div>
+               <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Chief Complaint</label>
+               <input type="text" [(ngModel)]="soapNote.subjective.chiefComplaint" (ngModelChange)="onFieldChange()" class="w-full text-sm font-medium text-slate-900 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-2 outline-none transition-all">
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+               <div>
+                  <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">History of Present Illness</label>
+                  <textarea [(ngModel)]="soapNote.subjective.historyOfPresentIllness" (ngModelChange)="onFieldChange()" rows="4" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+               </div>
+               <div>
+                  <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Review of Systems</label>
+                  <textarea [(ngModel)]="soapNote.subjective.reviewOfSystems" (ngModelChange)="onFieldChange()" rows="4" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+               </div>
+            </div>
+         </div>
+      </section>
+
+      <!-- OBJECTIVE -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group">
+         <div class="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+               <span class="w-6 h-6 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">O</span>
+               Objective
+            </h3>
+            <button (click)="openRefineModal.emit({key:'objective', title:'Objective', text: soapNote.objective?.physicalExam})" class="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-emerald-600 bg-white border border-emerald-200 hover:bg-emerald-50 px-2 py-1 rounded transition-all cursor-pointer flex items-center gap-1">
+               <lucide-icon [img]="Sparkles" class="w-3 h-3"></lucide-icon> AI Refine
+            </button>
+         </div>
+         <div class="p-5 space-y-4">
+            <div>
+               <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Vitals</label>
+               <input type="text" [(ngModel)]="soapNote.objective.vitals" (ngModelChange)="onFieldChange()" class="w-full text-sm font-mono text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg px-3 py-2 outline-none transition-all">
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+               <div>
+                  <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Physical Exam</label>
+                  <textarea [(ngModel)]="soapNote.objective.physicalExam" (ngModelChange)="onFieldChange()" rows="3" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+               </div>
+               <div>
+                  <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diagnostics / Labs</label>
+                  <textarea [(ngModel)]="soapNote.objective.diagnosticResults" (ngModelChange)="onFieldChange()" rows="3" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+               </div>
+            </div>
+         </div>
+      </section>
+
+      <!-- ASSESSMENT & MDM -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group">
+         <div class="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+               <span class="w-6 h-6 rounded bg-purple-100 text-purple-700 flex items-center justify-center text-xs">A</span>
+               Assessment & MDM
+            </h3>
+            <button (click)="openRefineModal.emit({key:'assessment', title:'Assessment', text: soapNote.assessment?.clinicalImpression})" class="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-purple-600 bg-white border border-purple-200 hover:bg-purple-50 px-2 py-1 rounded transition-all cursor-pointer flex items-center gap-1">
+               <lucide-icon [img]="Sparkles" class="w-3 h-3"></lucide-icon> AI Refine
+            </button>
+         </div>
+         <div class="p-5 space-y-4">
+            <div class="flex gap-4 items-start">
+               <div class="flex-1">
+                  <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Primary Diagnosis</label>
+                  <div class="relative">
+                     <span class="absolute left-3 top-1/2 -translate-y-1/2 bg-purple-100 text-purple-800 text-[10px] font-bold px-1.5 py-0.5 rounded">ICD-10</span>
+                     <input type="text" [(ngModel)]="soapNote.assessment.primaryDiagnosis" (ngModelChange)="onFieldChange()" class="w-full text-sm font-bold text-slate-900 bg-slate-50 border border-slate-200 focus:bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-lg pl-14 pr-3 py-2 outline-none transition-all">
+                  </div>
+               </div>
+               <div class="w-1/3">
+                  <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">MDM Complexity</label>
+                  <select class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-lg px-3 py-2 outline-none transition-all">
+                     <option>Straightforward</option>
+                     <option>Low</option>
+                     <option selected>Moderate</option>
+                     <option>High</option>
+                  </select>
+               </div>
+            </div>
+            <div>
+               <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Clinical Synthesis / MDM Justification</label>
+               <textarea [(ngModel)]="soapNote.assessment.clinicalImpression" (ngModelChange)="onFieldChange()" rows="3" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+            </div>
+         </div>
+      </section>
+
+      <!-- PLAN -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group">
+         <div class="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+               <span class="w-6 h-6 rounded bg-rose-100 text-rose-700 flex items-center justify-center text-xs">P</span>
+               Plan
+            </h3>
+            <button (click)="openRefineModal.emit({key:'plan', title:'Plan', text: soapNote.plan?.medicationsAndRx})" class="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 px-2 py-1 rounded transition-all cursor-pointer flex items-center gap-1">
+               <lucide-icon [img]="Sparkles" class="w-3 h-3"></lucide-icon> AI Refine
+            </button>
+         </div>
+         
+         <div class="p-5 space-y-4">
+            <!-- AHRQ / NIST Compliance Alert (UI Style) -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-3">
+               <lucide-icon [img]="Info" class="w-5 h-5 text-blue-600 shrink-0"></lucide-icon>
+               <div>
+                  <h4 class="text-xs font-bold text-blue-900 mb-0.5 flex items-center gap-2">
+                     Evidence-Based Screening Alert
+                     <span class="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">AHRQ Guideline</span>
+                  </h4>
+                  <p class="text-[11px] text-blue-800">The CDS system identified recommended preventative screenings based on the primary diagnosis. Please ensure screening discussions are documented.</p>
+               </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+               <div>
+                  <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Orders / Rx / Interventions</label>
+                  <div class="relative">
+                     <span class="absolute left-3 top-2.5 bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded">CPT</span>
+                     <textarea [(ngModel)]="soapNote.plan.medicationsAndRx" (ngModelChange)="onFieldChange()" rows="4" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg pl-12 pr-3 py-2 outline-none transition-all resize-none"></textarea>
+                  </div>
+               </div>
+               <div class="space-y-4">
+                  <div>
+                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Patient Education</label>
+                     <textarea [(ngModel)]="soapNote.plan.patientEducation" (ngModelChange)="onFieldChange()" rows="2" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+                  </div>
+                  <div>
+                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Follow-Up & Disposition</label>
+                     <textarea [(ngModel)]="soapNote.plan.followUp" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </section>
+
+      <!-- HIPAA Compliance / Audit Trail Footer -->
+      <div class="px-2 py-4">
+         <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Audit Trail & Compliance</h4>
+         <div class="grid grid-cols-2 gap-8 text-[11px] text-slate-500">
+            <div class="space-y-1">
+               <div class="flex justify-between"><span class="font-medium text-slate-400">Origination:</span> <span>ScribeOS CDS (AI-Assisted)</span></div>
+               <div class="flex justify-between"><span class="font-medium text-slate-400">Certification:</span> <span>ONC 45 CFR 170.315 Compliant</span></div>
+               <div class="flex justify-between"><span class="font-medium text-slate-400">Storage:</span> <span>HIPAA Compliant / Encrypted</span></div>
+            </div>
+            <div class="space-y-1">
+               <div class="flex justify-between"><span class="font-medium text-slate-400">Drafted:</span> <span>{{ soapNote?.lastUpdated || '2026-09-03T10:14:02Z' }}</span></div>
+               <div class="flex justify-between" *ngIf="soapNote?.isSigned"><span class="font-medium text-slate-400">Signed By:</span> <span>{{ soapNote?.signedBy || 'Dr. Sarah Chen, MD' }}</span></div>
+               <div class="flex justify-between" *ngIf="soapNote?.isSigned"><span class="font-medium text-slate-400">Attestation:</span> <span>{{ soapNote?.signedAt || '2026-09-03T10:20:15Z' }}</span></div>
+               <div class="text-amber-600 font-bold mt-1 text-right" *ngIf="!soapNote?.isSigned">AWAITING PROVIDER SIGNATURE</div>
+            </div>
+         </div>
+      </div>
+  </div>
+</div>
