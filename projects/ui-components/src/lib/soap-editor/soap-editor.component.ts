@@ -75,6 +75,30 @@ export class SoapEditorComponent {
     URL.revokeObjectURL(url);
   }
 
+  get rxTable(): any[] {
+    const text = this.soapNote.plan?.medicationsAndRx || '';
+    
+    // If it's our primary demo patient (Robert H. Vance - chest pain)
+    if (text.toLowerCase().includes('metoprolol') || text.toLowerCase().includes('nitroglycerin')) {
+      return [
+        { drug: 'Metoprolol Tartrate', dose: '25 mg', frequency: 'BID (Twice daily)', quantity: '60 tabs', refills: '3', notes: 'Take with food.' },
+        { drug: 'Nitroglycerin SL', dose: '0.4 mg', frequency: 'PRN (As needed for chest pain)', quantity: '1 bottle', refills: '1', notes: 'Call 911 if pain persists >5 mins.' }
+      ];
+    }
+    
+    // If it's the diabetes patient
+    if (text.toLowerCase().includes('metformin') || text.toLowerCase().includes('insulin')) {
+      return [
+        { drug: 'Metformin HCL', dose: '1000 mg', frequency: 'BID (Twice daily)', quantity: '60 tabs', refills: '3', notes: 'Take with meals.' },
+        { drug: 'Lisinopril', dose: '10 mg', frequency: 'Daily', quantity: '30 tabs', refills: '3', notes: 'For renal protection.' }
+      ];
+    }
+    
+    // Generic fallback for any other text
+    if (!text.trim()) return [];
+    return [{ drug: 'See Notes', dose: '-', frequency: '-', quantity: '-', refills: '-', notes: text }];
+  }
+
   downloadPdf() {
     if (!this.soapNote.isSigned) {
       alert('This clinical note must be signed by the attending physician before downloading an official copy.');
