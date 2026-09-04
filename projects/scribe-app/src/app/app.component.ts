@@ -7,7 +7,7 @@ import { CLINICAL_ENCOUNTERS } from './data/mock-encounters';
 import { ClinicalEncounter, SoapNote, MedicalEntity, TranscriptUtterance } from './types';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient('https://dcffaknqybuyffguslaf.supabase.co', 'sb_publishable_guYGjfIvr2P0RsQALhB-kA_8sYK0SjX');
+const supabase = createClient('https://ayzilsmrademvwdpqqhd.supabase.co', 'sb_publishable_VOM5JzguqWPVHxoYcNXOJQ_uy7IZi1s');
 import {
   HeaderBarComponent,
   PatientContextRibbonComponent,
