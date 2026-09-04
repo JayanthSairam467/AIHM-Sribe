@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { SessionsService, TasksService, MessagesService, RecordsService } from 'api-client';
 import { FormsModule } from '@angular/forms';
 import { CLINICAL_ENCOUNTERS } from './data/mock-encounters';
@@ -207,7 +207,7 @@ export class AppComponent {
 
         try {
           // Attempt to push real-time message to backend queue
-          // await firstValueFrom(this.messagesService.submitMessage(encounter.id, { speaker: 'doctor', content: transcript, category: 'general' }));
+          await firstValueFrom(this.messagesService.submitMessage(encounter.id as string, { speaker: 'doctor' as any, content: transcript, category: 'general' as any }).pipe(timeout(3000)));
         } catch(e) {
           console.debug("Backend offline, skipping message enqueue");
         }
@@ -342,24 +342,79 @@ export class AppComponent {
       isNote: true
     };
     this.activeEncounter.utterances.push(newNote);
-    this.visibleUtteranceCount++;
+      this.visibleUtteranceCount++;
   }
 
   async handleRegenerateNote() {
     this.isGenerating = true;
     
     try {
-      // Attempt to call the real backend API (Task Process 3)
-      // Note: firstValueFrom is used to convert Observable to Promise for async/await
-      // const session = await firstValueFrom(this.sessionsService.createSession({ patientId: this.activeEncounter.patient.mrn, practitionerId: 'dr_sarah' }));
-      // await firstValueFrom(this.tasksService.generateSoap(session.id));
+      // Build transcript text from the visible utterances
+      const transcript = this.activeEncounter.utterances
+        .slice(0, this.visibleUtteranceCount)
+        .map(u => `${u.speakerName}: ${u.text}`)
+        .join('\n');
+
+      // Call gemini-service directly for real AI SOAP generation (bypasses slow queue for demo)
+      const response = await fetch('http://127.0.0.1:4002/generate-soap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          transcript,
+          patientContext: {
+            name: this.activeEncounter.patient.fullName,
+            age: this.activeEncounter.patient.age,
+            sex: this.activeEncounter.patient.gender,
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody?.error?.message || `Gemini returned ${response.status}`);
+      }
+
+      const realSoap = await response.json();
       
-      // Simulating network delay for now before throwing since backend is offline
-      await new Promise(r => setTimeout(r, 800));
-      throw new Error("Backend offline"); 
+      if (realSoap && realSoap.subjective) {
+        // Map AI-generated SOAP to our UI structure
+        this.soapNote = {
+          subjective: {
+            chiefComplaint: realSoap.subjective?.chiefComplaint || '',
+            historyOfPresentIllness: realSoap.subjective?.historyOfPresentIllness || '',
+            reviewOfSystems: (realSoap.subjective?.reviewOfSystems || []).join(', '),
+            currentMedications: (realSoap.subjective?.currentMedications || []).join(', '),
+            allergies: (realSoap.subjective?.allergies || []).join(', '),
+          },
+          objective: {
+            vitalSigns: realSoap.objective?.vitalSigns || {},
+            physicalExam: (realSoap.objective?.physicalExam || []).join('\n'),
+            labResults: (realSoap.objective?.labDiagnosticResults || []).join('\n'),
+          },
+          assessment: {
+            primaryDiagnosis: realSoap.assessment?.primaryDiagnosis || '',
+            differentialDiagnoses: realSoap.assessment?.differentialDiagnoses || [],
+            clinicalImpression: realSoap.assessment?.clinicalRationale || '',
+          },
+          plan: {
+            medicationsAndRx: (realSoap.plan?.medicationsPrescribed || [])
+              .map((m: any) => `${m.name} ${m.dosage} ${m.frequency} x ${m.duration} — ${m.instructions}`)
+              .join('\n'),
+            diagnosticOrders: (realSoap.plan?.diagnosticOrders || []).join('\n'),
+            patientEducation: (realSoap.plan?.patientEducation || []).join('\n'),
+            followUp: realSoap.plan?.followUp || '',
+            redFlagWarnings: (realSoap.plan?.redFlagWarnings || []).join('\n'),
+          },
+          lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isSigned: false,
+        } as any;
+        this.showToast('✅ AI SOAP note generated successfully by Gemini!', 'success');
+      } else {
+        throw new Error('Gemini returned empty response');
+      }
     } catch (e) {
-      console.warn("Backend API not reachable (or actively developing). Falling back to local mock generation for UI demo purposes.");
-      this.showToast("Backend API offline. Falling back to local offline generation.", "info");
+      console.warn("Backend API call failed. Falling back to local mock generation for UI demo purposes.", e);
+      this.showToast("Backend API offline or slow. Falling back to local offline generation.", "info");
       
       // Mock Fallback Generation
       setTimeout(() => {
@@ -370,6 +425,8 @@ export class AppComponent {
         };
         this.isGenerating = false;
       }, 1500);
+    } finally {
+      this.isGenerating = false;
     }
   }
 
