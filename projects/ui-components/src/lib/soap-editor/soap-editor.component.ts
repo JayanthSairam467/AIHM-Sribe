@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, FileText, Copy, Check, Download, Sparkles, RefreshCw, CheckCircle2, FileCheck2, User, FileJson, Info } from 'lucide-angular';
+import { AutoResizeDirective } from './auto-resize.directive';
 
 @Component({
   selector: 'lib-soap-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, AutoResizeDirective],
   templateUrl: './soap-editor.component.html',
 })
 export class SoapEditorComponent {

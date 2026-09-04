@@ -86,11 +86,11 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                <div>
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">History of Present Illness</label>
-                  <textarea [(ngModel)]="soapNote.subjective.historyOfPresentIllness" (ngModelChange)="onFieldChange()" rows="4" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+                  <textarea autoResize [(ngModel)]="soapNote.subjective.historyOfPresentIllness" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
                </div>
                <div>
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Review of Systems</label>
-                  <textarea [(ngModel)]="soapNote.subjective.reviewOfSystems" (ngModelChange)="onFieldChange()" rows="4" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+                  <textarea autoResize [(ngModel)]="soapNote.subjective.reviewOfSystems" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
                </div>
             </div>
          </div>
@@ -115,11 +115,11 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                <div>
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Physical Exam</label>
-                  <textarea [(ngModel)]="soapNote.objective.physicalExam" (ngModelChange)="onFieldChange()" rows="3" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+                  <textarea autoResize [(ngModel)]="soapNote.objective.physicalExam" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
                </div>
                <div>
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Diagnostics / Labs</label>
-                  <textarea [(ngModel)]="soapNote.objective.diagnosticResults" (ngModelChange)="onFieldChange()" rows="3" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+                  <textarea autoResize [(ngModel)]="soapNote.objective.diagnosticResults" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
                </div>
             </div>
          </div>
@@ -157,7 +157,7 @@
             </div>
             <div>
                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Clinical Synthesis / MDM Justification</label>
-               <textarea [(ngModel)]="soapNote.assessment.clinicalImpression" (ngModelChange)="onFieldChange()" rows="3" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+               <textarea autoResize [(ngModel)]="soapNote.assessment.clinicalImpression" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
             </div>
          </div>
       </section>
@@ -192,17 +192,17 @@
                   <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Orders / Rx / Interventions</label>
                   <div class="relative">
                      <span class="absolute left-3 top-2.5 bg-rose-100 text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded">CPT</span>
-                     <textarea [(ngModel)]="soapNote.plan.medicationsAndRx" (ngModelChange)="onFieldChange()" rows="4" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg pl-12 pr-3 py-2 outline-none transition-all resize-none"></textarea>
+                     <textarea autoResize [(ngModel)]="soapNote.plan.medicationsAndRx" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg pl-12 pr-3 py-2 outline-none transition-all resize-none"></textarea>
                   </div>
                </div>
                <div class="space-y-4">
                   <div>
                      <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Patient Education</label>
-                     <textarea [(ngModel)]="soapNote.plan.patientEducation" (ngModelChange)="onFieldChange()" rows="2" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+                     <textarea autoResize [(ngModel)]="soapNote.plan.patientEducation" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
                   </div>
                   <div>
                      <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Follow-Up & Disposition</label>
-                     <textarea [(ngModel)]="soapNote.plan.followUp" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
+                     <textarea autoResize [(ngModel)]="soapNote.plan.followUp" (ngModelChange)="onFieldChange()" rows="1" class="w-full text-sm text-slate-800 bg-slate-50 border border-slate-200 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-lg px-3 py-2 outline-none transition-all resize-none"></textarea>
                   </div>
                </div>
             </div>
