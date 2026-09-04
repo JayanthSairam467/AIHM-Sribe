@@ -86,7 +86,7 @@ export class SoapEditorComponent {
     // Temporarily make it visible for rendering
     element.style.display = 'block';
     
-    const opt = {
+    const opt: any = {
       margin:       0.5,
       filename:     `SOAP_Note_${this.patient.fullName.replace(/\s+/g, '_')}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
