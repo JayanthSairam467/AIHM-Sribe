@@ -34,6 +34,9 @@
         <button (click)="regenerateNote.emit()" [disabled]="isGenerating" class="text-xs px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
            <lucide-icon [img]="RefreshCw" [ngClass]="isGenerating ? 'animate-spin' : ''" class="w-4 h-4"></lucide-icon> Regenerate
         </button>
+        <button (click)="downloadPdf()" class="text-xs px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
+           <lucide-icon [img]="Download" class="w-4 h-4"></lucide-icon> Download PDF
+        </button>
         <button (click)="handleCopyForEhr()" class="text-xs px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
            <lucide-icon [img]="copySuccess ? Check : Copy" [ngClass]="copySuccess ? 'text-emerald-500' : ''" class="w-4 h-4"></lucide-icon> {{ copySuccess ? 'Copied' : 'Copy to EHR' }}
         </button>
@@ -226,5 +229,74 @@
             </div>
          </div>
       </div>
+  </div>
+</div>
+
+<!-- Hidden PDF Template -->
+<div style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; z-index: -1;">
+  <div #pdfContent class="bg-white text-black p-10 font-sans" style="font-family: Arial, sans-serif;">
+    <!-- Header -->
+    <div class="border-b-2 border-slate-800 pb-4 mb-6 flex justify-between items-end">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900">Mercy Hospital</h1>
+        <p class="text-slate-600 mt-1">Department of Primary Care</p>
+      </div>
+      <div class="text-right">
+        <p class="font-bold text-slate-900">Dr. Sarah Chen, MD</p>
+        <p class="text-slate-600 text-sm">Internal Medicine</p>
+      </div>
+    </div>
+
+    <!-- Patient Info -->
+    <div class="bg-slate-50 p-4 rounded-lg mb-8 border border-slate-200">
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div><strong>Patient Name:</strong> {{ patient.fullName }}</div>
+        <div><strong>Date of Visit:</strong> {{ patient.encounterDate || 'Today' }}</div>
+        <div><strong>DOB / Age:</strong> {{ patient.dob }} ({{ patient.age }})</div>
+        <div><strong>MRN:</strong> {{ patient.mrn }}</div>
+      </div>
+    </div>
+
+    <!-- SOAP Content -->
+    <h2 class="text-xl font-bold text-slate-800 mb-3 border-b pb-1">Subjective</h2>
+    <div class="mb-6 text-sm space-y-2">
+      <p><strong>Chief Complaint:</strong> {{ soapNote.subjective?.chiefComplaint }}</p>
+      <p><strong>History of Present Illness:</strong> {{ soapNote.subjective?.historyOfPresentIllness }}</p>
+      <p><strong>Review of Systems:</strong> {{ soapNote.subjective?.reviewOfSystems }}</p>
+    </div>
+
+    <h2 class="text-xl font-bold text-slate-800 mb-3 border-b pb-1">Objective</h2>
+    <div class="mb-6 text-sm space-y-2">
+      <p><strong>Vitals:</strong> {{ soapNote.objective?.vitals }}</p>
+      <p><strong>Physical Exam:</strong> {{ soapNote.objective?.physicalExam }}</p>
+    </div>
+
+    <h2 class="text-xl font-bold text-slate-800 mb-3 border-b pb-1">Assessment</h2>
+    <div class="mb-6 text-sm space-y-2">
+      <p><strong>Primary Diagnosis:</strong> {{ soapNote.assessment?.primaryDiagnosis }}</p>
+      <p><strong>Clinical Impression:</strong> {{ soapNote.assessment?.clinicalImpression }}</p>
+    </div>
+
+    <h2 class="text-xl font-bold text-slate-800 mb-3 border-b pb-1">Plan</h2>
+    <div class="mb-8 text-sm space-y-2">
+      <p><strong>Medications & Rx:</strong> {{ soapNote.plan?.medicationsAndRx }}</p>
+      <p><strong>Diagnostics:</strong> {{ soapNote.plan?.diagnostics }}</p>
+      <p><strong>Patient Education:</strong> {{ soapNote.plan?.patientEducation }}</p>
+      <p><strong>Follow-Up:</strong> {{ soapNote.plan?.followUp }}</p>
+    </div>
+
+    <!-- Digital Signature Block -->
+    <div class="mt-12 pt-8 border-t-2 border-slate-200 text-sm">
+      <p class="mb-2">This document has been electronically signed and authorized by the attending physician.</p>
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+        </div>
+        <div>
+          <p class="font-bold text-slate-900 text-lg" style="font-family: 'Brush Script MT', cursive;">{{ soapNote.signedBy }}</p>
+          <p class="text-slate-500">Electronically Signed on {{ soapNote.signedAt }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

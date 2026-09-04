@@ -1,8 +1,10 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, FileText, Copy, Check, Download, Sparkles, RefreshCw, CheckCircle2, FileCheck2, User, FileJson, Info } from 'lucide-angular';
 import { AutoResizeDirective } from './auto-resize.directive';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 @Component({
   selector: 'lib-soap-editor',
@@ -11,6 +13,7 @@ import { AutoResizeDirective } from './auto-resize.directive';
   templateUrl: './soap-editor.component.html',
 })
 export class SoapEditorComponent {
+  @ViewChild('pdfContent') pdfContent!: ElementRef;
   @Input() soapNote: any = {};
   @Input() patient: any = {};
   @Input() isGenerating = false;
@@ -70,5 +73,30 @@ export class SoapEditorComponent {
     a.download = `SOAP_NOTE_${this.patient?.mrn}_${new Date().toISOString().slice(0,10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  downloadPdf() {
+    if (!this.soapNote.isSigned) {
+      alert('This clinical note must be signed by the attending physician before downloading an official copy.');
+      return;
+    }
+    
+    const element = this.pdfContent.nativeElement;
+    
+    // Temporarily make it visible for rendering
+    element.style.display = 'block';
+    
+    const opt = {
+      margin:       0.5,
+      filename:     `SOAP_Note_${this.patient.fullName.replace(/\s+/g, '_')}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+      // Hide again after generation
+      element.style.display = 'none';
+    });
   }
 }
