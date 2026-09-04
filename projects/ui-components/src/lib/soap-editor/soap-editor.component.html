@@ -1,4 +1,24 @@
 <div class="flex flex-col h-full bg-slate-100 relative">
+  <!-- Loading Overlay -->
+  <div *ngIf="isGenerating" class="absolute inset-0 z-50 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center">
+    <div class="bg-white p-6 rounded-2xl shadow-xl border border-blue-100 flex flex-col items-center max-w-sm w-full text-center">
+      <lucide-icon [img]="RefreshCw" class="w-8 h-8 text-blue-600 animate-spin mb-4"></lucide-icon>
+      <h3 class="text-lg font-bold text-slate-800 mb-1">OmniScribe AI is Processing</h3>
+      <p class="text-sm text-slate-500 mb-4">Generating clinical SOAP note and applying FHIR formatting. This may take a moment...</p>
+      <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+        <div class="bg-blue-600 h-full rounded-full animate-pulse w-full origin-left" style="animation: progress 2s ease-in-out infinite;"></div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes progress {
+      0% { transform: scaleX(0); }
+      50% { transform: scaleX(1); opacity: 1; }
+      100% { transform: scaleX(0); opacity: 0; }
+    }
+  </style>
+
   <!-- Minimalist Header -->
   <div class="min-h-[56px] py-2 px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-white z-20 shadow-sm">
      <div class="text-[11px] font-medium text-slate-500 flex flex-wrap items-center gap-2.5">

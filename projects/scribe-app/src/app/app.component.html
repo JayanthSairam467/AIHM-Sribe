@@ -3,6 +3,22 @@
   <!-- Top Header -->
   <lib-header-bar class="shrink-0 relative z-20" (logout)="handleLogout()" (openArchitectureSpec)="isArchModalOpen = true"></lib-header-bar>
 
+  <!-- Global Toast Notification -->
+  <div *ngIf="toastMessage" 
+       class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-fade-in-down">
+    <div class="px-4 py-3 rounded-xl shadow-lg border flex items-center gap-3 backdrop-blur-md"
+         [ngClass]="{
+           'bg-emerald-50/90 border-emerald-200 text-emerald-800': toastType === 'success',
+           'bg-red-50/90 border-red-200 text-red-800': toastType === 'error',
+           'bg-blue-50/90 border-blue-200 text-blue-800': toastType === 'info'
+         }">
+      <div class="font-medium text-sm">{{ toastMessage }}</div>
+      <button (click)="toastMessage = null" class="opacity-70 hover:opacity-100 p-1 rounded-md hover:bg-black/5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+  </div>
+
   <!-- Main Three-Pane Workspace -->
   <div class="flex-1 w-full flex overflow-hidden">
       <!-- Left Pane (Patient Context & Clinical Encounters) -->
