@@ -80,8 +80,8 @@ export class AppComponent {
 
   // Authentication State
   isLoggedIn = false;
-  loginEmail = '';
-  loginPassword = '';
+  loginEmail = 'dr.sarah@scribe.ai';
+  loginPassword = 'password123';
   loginError = false;
   loginRole = 'Doctor';
 
@@ -99,8 +99,8 @@ export class AppComponent {
 
   handleLogout() {
     this.isLoggedIn = false;
-    this.loginEmail = '';
-    this.loginPassword = '';
+    this.loginEmail = 'dr.sarah@scribe.ai';
+    this.loginPassword = 'password123';
   }
 
   private simulationInterval: any = null;
