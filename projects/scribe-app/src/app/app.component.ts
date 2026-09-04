@@ -162,6 +162,8 @@ export class AppComponent {
         } else {
           this.isSimulating = false;
           this.clearInterval();
+          // Automatically trigger AI generation when the conversation finishes
+          this.handleRegenerateNote();
         }
       }, 3000);
     }
@@ -249,6 +251,8 @@ export class AppComponent {
     this.timerSeconds = this.activeEncounter.utterances[this.activeEncounter.utterances.length - 1]?.timeSec || 142;
     this.isSimulating = false;
     this.clearInterval();
+    // Automatically trigger AI generation when fast-forwarding to the end
+    this.handleRegenerateNote();
   }
 
   handleResetStream() {
