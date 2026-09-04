@@ -6,8 +6,7 @@
     "start": "ng serve scribe-app",
     "build": "ng build scribe-app",
     "watch": "ng build scribe-app --watch --configuration development",
-    "test": "ng test",
-    "generate:api": "openapi-generator-cli generate -i ./openapi.yaml -g typescript-angular -o ./projects/api-client/src/lib"
+    "generate:api": "openapi --input ./openapi.yaml --output ./projects/api-client/src/lib/generated --client angular"
   },
   "private": true,
   "dependencies": {
@@ -38,6 +37,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "ng-packagr": "^17.3.0",
+    "openapi-typescript-codegen": "^0.31.0",
     "postcss": "^8.5.27",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.4.2"

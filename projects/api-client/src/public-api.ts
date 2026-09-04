@@ -4,3 +4,4 @@
 
 export * from './lib/api-client.service';
 export * from './lib/api-client.component';
+export * from './lib/generated/index';

@@ -1,0 +1,653 @@
+openapi: 3.1.0
+info:
+  title: OmniScribe Health — AI Scribe API
+  description: |
+    Enterprise backend for the OmniScribe AI Medical Scribe.
+    Handles clinical consultation sessions, message ingestion via
+    a Redis-backed FIFO queue, SOAP note generation via Gemini 3.7,
+    and FHIR R4 clinical document export.
+  version: 1.0.0
+  contact:
+    name: OmniScribe Engineering
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local Development
+
+tags:
+  - name: Health
+    description: System health and readiness checks
+  - name: Sessions
+    description: Clinical consultation session lifecycle
+  - name: Messages
+    description: Transcript message ingestion (Process 1)
+  - name: Records
+    description: Accumulated clinical records (Process 2)
+  - name: Tasks
+    description: AI processing tasks — SOAP generation (Process 3)
+  - name: FHIR
+    description: HL7 FHIR R4 clinical document export
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: System health check
+      operationId: getHealth
+      responses:
+        '200':
+          description: All systems operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /scribe/sessions:
+    post:
+      tags: [Sessions]
+      summary: Create a new consultation session
+      operationId: createSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /scribe/sessions/{sessionId}:
+    get:
+      tags: [Sessions]
+      summary: Get session details and status
+      operationId: getSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Sessions]
+      summary: Update session status (e.g., complete or cancel)
+      operationId: updateSession
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+
+  /scribe/sessions/{sessionId}/messages:
+    post:
+      tags: [Messages]
+      summary: Submit a transcript message to the queue
+      description: |
+        Enqueues a single doctor/patient/nurse utterance into the
+        Redis-backed FIFO queue. The worker will dequeue and persist
+        it to the records table sequentially.
+      operationId: submitMessage
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitMessageRequest'
+      responses:
+        '202':
+          description: Message accepted and enqueued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageAcceptedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    get:
+      tags: [Messages]
+      summary: List all messages in a session
+      operationId: listMessages
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+
+  /scribe/sessions/{sessionId}/records:
+    get:
+      tags: [Records]
+      summary: Get accumulated clinical records for a session
+      operationId: getRecords
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Accumulated records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordListResponse'
+
+  /scribe/sessions/{sessionId}/tasks/generate-soap:
+    post:
+      tags: [Tasks]
+      summary: Trigger SOAP note generation
+      description: |
+        Creates a task that reads all records for this session,
+        sends the accumulated transcript to Gemini 3.7 Flash,
+        and persists the structured SOAP note.
+      operationId: generateSoap
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateSoapRequest'
+      responses:
+        '202':
+          description: SOAP generation task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /scribe/sessions/{sessionId}/tasks/{taskId}:
+    get:
+      tags: [Tasks]
+      summary: Get task status and result
+      operationId: getTask
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /scribe/sessions/{sessionId}/soap:
+    get:
+      tags: [Tasks]
+      summary: Get the latest generated SOAP note
+      operationId: getSoapNote
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: SOAP note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoapNoteResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /scribe/sessions/{sessionId}/fhir/export:
+    post:
+      tags: [FHIR]
+      summary: Export session as FHIR R4 Bundle
+      description: |
+        Converts the SOAP note and patient context into a full
+        HL7 FHIR R4 Document Bundle containing Composition, Patient,
+        Practitioner, Encounter, Condition, MedicationRequest, and
+        Observation resources.
+      operationId: exportFhir
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '201':
+          description: FHIR bundle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FhirBundleResponse'
+
+  /scribe/sessions/{sessionId}/fhir:
+    get:
+      tags: [FHIR]
+      summary: Get the FHIR R4 Bundle
+      operationId: getFhirBundle
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: FHIR R4 Document Bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FhirBundleResponse'
+
+components:
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ── Shared ──
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: "transcript content is required"
+            details:
+              type: array
+              items:
+                type: object
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        dependencies:
+          type: object
+          properties:
+            supabase:
+              type: string
+              enum: [connected, disconnected]
+            redis:
+              type: string
+              enum: [connected, disconnected]
+            gemini:
+              type: string
+              enum: [configured, unconfigured]
+        timestamp:
+          type: string
+          format: date-time
+
+    # ── Session ──
+    CreateSessionRequest:
+      type: object
+      required: [patientId, practitionerId]
+      properties:
+        patientId:
+          type: string
+          description: Patient MRN or internal ID
+        practitionerId:
+          type: string
+          description: Doctor/practitioner ID
+        specialty:
+          type: string
+          example: "Internal Medicine & Cardiology"
+        patientContext:
+          type: object
+          properties:
+            name:
+              type: string
+            age:
+              type: integer
+            sex:
+              type: string
+              enum: [Male, Female, Other]
+            mrn:
+              type: string
+            allergies:
+              type: array
+              items:
+                type: string
+            currentMedications:
+              type: array
+              items:
+                type: string
+
+    UpdateSessionRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+
+    SessionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        patientId:
+          type: string
+        practitionerId:
+          type: string
+        specialty:
+          type: string
+        status:
+          type: string
+          enum: [active, processing, completed, cancelled]
+        messageCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ── Messages ──
+    SubmitMessageRequest:
+      type: object
+      required: [speaker, content]
+      properties:
+        speaker:
+          type: string
+          enum: [doctor, patient, nurse, system]
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        category:
+          type: string
+          enum: [symptom, medication, vital, diagnosis, general]
+
+    MessageAcceptedResponse:
+      type: object
+      properties:
+        messageId:
+          type: string
+          format: uuid
+        jobId:
+          type: string
+          description: BullMQ job ID for tracking
+        sequenceNumber:
+          type: integer
+        status:
+          type: string
+          enum: [queued]
+
+    MessageListResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              speaker:
+                type: string
+              content:
+                type: string
+              sequenceNumber:
+                type: integer
+              category:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+        total:
+          type: integer
+
+    # ── Records ──
+    RecordListResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        records:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              recordType:
+                type: string
+                enum: [transcript, clinical_entity, vital_sign]
+              content:
+                type: object
+              sourceMessageIds:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              createdAt:
+                type: string
+                format: date-time
+        total:
+          type: integer
+
+    # ── Tasks ──
+    GenerateSoapRequest:
+      type: object
+      properties:
+        specialty:
+          type: string
+          description: Override the session specialty for this generation
+
+    TaskResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        taskType:
+          type: string
+          enum: [generate_soap, export_fhir]
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        result:
+          type: object
+          description: Task output (SOAP note or FHIR bundle)
+        error:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ── SOAP ──
+    SoapNoteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        subjective:
+          type: object
+          properties:
+            chiefComplaint:
+              type: string
+            historyOfPresentIllness:
+              type: string
+            reviewOfSystems:
+              type: array
+              items:
+                type: string
+            currentMedications:
+              type: array
+              items:
+                type: string
+            allergies:
+              type: array
+              items:
+                type: string
+        objective:
+          type: object
+          properties:
+            vitalSigns:
+              type: object
+              properties:
+                bloodPressure:
+                  type: string
+                heartRate:
+                  type: string
+                respiratoryRate:
+                  type: string
+                temperature:
+                  type: string
+                spO2:
+                  type: string
+                bmi:
+                  type: string
+            physicalExam:
+              type: array
+              items:
+                type: string
+            labDiagnosticResults:
+              type: array
+              items:
+                type: string
+        assessment:
+          type: object
+          properties:
+            primaryDiagnosis:
+              type: string
+            icd10Code:
+              type: string
+            differentialDiagnoses:
+              type: array
+              items:
+                type: string
+            clinicalRiskTier:
+              type: string
+              enum: [Low, Moderate, High, Critical]
+            clinicalRationale:
+              type: string
+        plan:
+          type: object
+          properties:
+            medicationsPrescribed:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  dosage:
+                    type: string
+                  frequency:
+                    type: string
+                  duration:
+                    type: string
+                  instructions:
+                    type: string
+            diagnosticOrders:
+              type: array
+              items:
+                type: string
+            patientEducation:
+              type: array
+              items:
+                type: string
+            followUp:
+              type: string
+            redFlagWarnings:
+              type: array
+              items:
+                type: string
+        source:
+          type: string
+        version:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── FHIR ──
+    FhirBundleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        fhirVersion:
+          type: string
+          example: "R4"
+        resourceCount:
+          type: integer
+        bundle:
+          type: object
+          description: Full HL7 FHIR R4 Document Bundle JSON
+        createdAt:
+          type: string
+          format: date-time
