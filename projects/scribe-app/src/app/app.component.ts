@@ -356,7 +356,7 @@ export class AppComponent {
         .join('\n');
 
       // Call gemini-service directly for real AI SOAP generation (bypasses slow queue for demo)
-      const response = await fetch('http://127.0.0.1:4002/generate-soap', {
+      const response = await fetch('https://aihm-gemini-backend.onrender.com/generate-soap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
