@@ -15,44 +15,45 @@ OmniScribe is built on a strictly decoupled, distributed microservices architect
 
 ```mermaid
 graph TD
-    subgraph "Vercel Edge Network (Frontend CDN)"
-        UI[Angular 17 UI / RxJS State]
-        Mic[Web Speech API Audio Stream]
-        UI <-->|Continuous Listening| Mic
+    subgraph Frontend["Vercel Edge Network (Frontend CDN)"]
+        UI["Angular 17 UI / RxJS State"]
+        Mic["Web Speech API Audio Stream"]
+        UI -- "Continuous Listening" --> Mic
+        Mic -- "Audio Stream" --> UI
     end
 
-    subgraph "Render Compute Environment (Backend Nodes)"
-        Gateway[API Gateway / Rate Limiter]
-        Scribe[Scribe Core Service]
-        GeminiNode[Gemini AI Worker Service]
+    subgraph Backend["Render Compute Environment (Backend Nodes)"]
+        Gateway["API Gateway / Rate Limiter"]
+        Scribe["Scribe Core Service"]
+        GeminiNode["Gemini AI Worker Service"]
         
-        Gateway -->|Route /scribe| Scribe
-        Gateway -->|Route /gemini| GeminiNode
+        Gateway --> Scribe
+        Gateway --> GeminiNode
     end
 
-    subgraph "Supabase Cloud (Zero-Trust Storage)"
-        RLS{Row Level Security Policy Engine}
-        KMS[Application-Level Encryption Layer]
-        DB[(PostgreSQL Database)]
-        Audit[Immutable SQL Audit Triggers]
+    subgraph Database["Supabase Cloud (Zero-Trust Storage)"]
+        RLS{"Row Level Security Policy Engine"}
+        KMS["Application-Level Encryption Layer"]
+        DB[("PostgreSQL Database")]
+        Audit["Immutable SQL Audit Triggers"]
     end
 
-    subgraph "Google Cloud AI"
-        LLM[Google Gemini 3.6-flash LLM]
+    subgraph Cloud["Google Cloud AI"]
+        LLM["Google Gemini 3.6-flash LLM"]
     end
 
     %% The Flow
-    UI -->|1. REST via YAML Contract| Gateway
-    UI -->|2. Sync Generation Bypass| GeminiNode
-    GeminiNode -->|3. Context-Injected Prompts + Transcript| LLM
-    LLM -->|4. Structured JSON SOAP Output| GeminiNode
-    GeminiNode -->|5. Return Parsed Data| UI
+    UI -- "1. REST via YAML Contract" --> Gateway
+    UI -- "2. Sync Generation Bypass" --> GeminiNode
+    GeminiNode -- "3. Context-Injected Prompts" --> LLM
+    LLM -- "4. Structured JSON SOAP Output" --> GeminiNode
+    GeminiNode -- "5. Return Parsed Data" --> UI
     
     %% Secure Database Logging
-    UI -->|6. Direct DB Insert (Anon Key)| RLS
-    RLS -->|7. Validates JWT Identity| KMS
-    KMS -->|8. AES-256 Encrypts PII| DB
-    DB -->|9. Logs Transaction| Audit
+    UI -- "6. Direct DB Insert Anon Key" --> RLS
+    RLS -- "7. Validates JWT Identity" --> KMS
+    KMS -- "8. AES-256 Encrypts PII" --> DB
+    DB -- "9. Logs Transaction" --> Audit
 ```
 
 ---
