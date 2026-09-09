@@ -1,4 +1,5 @@
 <ng-container *ngIf="isLoggedIn; else loginPage">
+<ng-container *ngIf="loginRole === 'Doctor'">
 <div class="h-screen w-full flex flex-col bg-slate-50 font-sans overflow-hidden relative">
   <!-- Top Header -->
   <lib-header-bar class="shrink-0 relative z-20" (logout)="handleLogout()" (openArchitectureSpec)="isArchModalOpen = true"></lib-header-bar>
@@ -239,8 +240,714 @@
 </div>
 
 </ng-container>
+<!-- PHARMACIST VIEW -->
+<ng-container *ngIf="loginRole === 'Pharmacist'">
+  <div class="min-h-screen bg-slate-100 font-sans flex">
+    <!-- Sidebar -->
+    <div class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
+      <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+        <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+        </div>
+        <span class="text-xl font-bold tracking-tight">RxManager<span class="text-blue-400">Pro</span></span>
+      </div>
+      <div class="p-4 flex-1">
+        <div class="text-xs font-bold text-slate-500 mb-4 uppercase tracking-wider">Pharmacy Queue</div>
+        <div class="space-y-1">
+          <a href="javascript:void(0)" (click)="pharmacistView = 'queue'" class="block px-3 py-2 rounded-md text-sm font-medium cursor-pointer" [class.bg-blue-600]="pharmacistView === 'queue'" [class.text-white]="pharmacistView === 'queue'" [class.text-slate-400]="pharmacistView !== 'queue'" [class.hover:bg-slate-800]="pharmacistView !== 'queue'">Pending Rx ({{pharmacistPrescriptions.length}})</a>
+          <a href="javascript:void(0)" (click)="pharmacistView = 'inventory'" class="block px-3 py-2 rounded-md text-sm font-medium cursor-pointer" [class.bg-blue-600]="pharmacistView === 'inventory'" [class.text-white]="pharmacistView === 'inventory'" [class.text-slate-400]="pharmacistView !== 'inventory'" [class.hover:bg-slate-800]="pharmacistView !== 'inventory'">Inventory</a>
+          <a href="javascript:void(0)" (click)="pharmacistView = 'patients'" class="block px-3 py-2 rounded-md text-sm font-medium cursor-pointer" [class.bg-blue-600]="pharmacistView === 'patients'" [class.text-white]="pharmacistView === 'patients'" [class.text-slate-400]="pharmacistView !== 'patients'" [class.hover:bg-slate-800]="pharmacistView !== 'patients'">Patients</a>
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-800">
+        <div class="flex items-center gap-3 mb-4">
+          <img src="https://ui-avatars.com/api/?name=Pharm+John&background=0D8ABC&color=fff" class="w-10 h-10 rounded-full">
+          <div>
+            <div class="text-sm font-bold">John Doe, PharmD</div>
+            <div class="text-xs text-slate-400">Chief Pharmacist</div>
+          </div>
+        </div>
+        <button (click)="handleLogout()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-md transition-colors cursor-pointer">Sign Out</button>
+      </div>
+    </div>
 
-<!-- LOGIN PAGE -->
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+      <div class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+        <h1 class="text-2xl font-bold text-slate-800">
+          <span *ngIf="pharmacistView === 'queue'">Incoming Prescriptions</span>
+          <span *ngIf="pharmacistView === 'inventory'">Inventory Management</span>
+          <span *ngIf="pharmacistView === 'patients'">Patient Directory</span>
+        </h1>
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" placeholder="Search..." class="pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none w-64">
+          </div>
+        </div>
+      </div>
+
+      <!-- QUEUE VIEW -->
+      <div *ngIf="pharmacistView === 'queue'" class="p-8">
+        <div *ngIf="pharmacistPrescriptions.length === 0" class="flex flex-col items-center justify-center py-20 text-slate-400">
+          <svg class="w-16 h-16 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <p class="text-lg">Queue is empty. Waiting for new clinical prescriptions...</p>
+        </div>
+
+        <div class="grid gap-6">
+          <div *ngFor="let note of pharmacistPrescriptions" class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col md:flex-row">
+            
+            <!-- Patient Profile Column -->
+            <div class="md:w-1/3 bg-slate-50 p-6 border-r border-slate-200 flex flex-col items-center text-center">
+              <div class="relative">
+                <img [src]="getMockPatientForNote(note).avatar" class="w-24 h-24 rounded-full border-4 border-white shadow-md mb-4">
+                <div class="absolute bottom-4 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
+              </div>
+              <h2 class="text-xl font-bold text-slate-800 mb-1">{{ getMockPatientForNote(note).name }}</h2>
+              <p class="text-sm text-slate-500 mb-4">{{ getMockPatientForNote(note).age }} yrs • {{ getMockPatientForNote(note).gender }} • MRN: #{{ getMockPatientForNote(note).mrn }}</p>
+              
+              <div class="w-full bg-white rounded-lg p-3 border border-slate-200 text-left text-xs space-y-2 mb-4">
+                <div class="flex justify-between"><span class="text-slate-500">Allergies:</span><span class="font-bold text-rose-600">{{ getMockPatientForNote(note).allergies }}</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Weight:</span><span class="font-bold text-slate-700">{{ getMockPatientForNote(note).weight }}</span></div>
+                <div class="flex justify-between"><span class="text-slate-500">BP:</span><span class="font-bold text-slate-700">{{ getMockPatientForNote(note).bp }}</span></div>
+              </div>
+              
+              <button (click)="viewingChartNote = note" class="w-full bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 py-2 rounded-lg text-sm font-bold transition-colors cursor-pointer">View Full Chart</button>
+            </div>
+
+            <!-- Rx Details Column -->
+            <div class="md:w-2/3 p-6 flex flex-col">
+              <div class="flex justify-between items-start mb-6">
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">E-Prescription</span>
+                    <span class="text-slate-400 text-xs font-mono">ID: {{note.id.substring(0,8)}}</span>
+                  </div>
+                  <p class="text-xs text-slate-500">Received from Dr. Sarah (Internal Medicine) • {{note.created_at | date:'medium'}}</p>
+                </div>
+                <span class="bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-sm tracking-widest uppercase">Needs Dispensing</span>
+              </div>
+
+              <div class="flex-1 bg-slate-50 rounded-xl border border-slate-200 p-0 mb-6 overflow-hidden">
+                <div class="flex items-center gap-2 p-4 border-b border-slate-200 bg-white">
+                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                  <h3 class="text-sm font-bold text-slate-800 uppercase tracking-widest">Medications Ordered</h3>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-sm border-collapse">
+                    <thead class="bg-slate-100 text-slate-500 uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th class="p-3 border-b border-slate-200 w-12 text-center">#</th>
+                        <th class="p-3 border-b border-slate-200">Medicine Name</th>
+                        <th class="p-3 border-b border-slate-200">Dosage</th>
+                        <th class="p-3 border-b border-slate-200">Route</th>
+                        <th class="p-3 border-b border-slate-200">Frequency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let med of getMedicationArray(note.plan); let idx = index" class="border-b border-slate-100 last:border-0 hover:bg-slate-100/50 transition-colors">
+                        <td class="p-3 text-slate-400 font-mono text-center">{{idx + 1}}</td>
+                        <td class="p-3 font-bold text-slate-800">{{med.name || med.medication || med}}</td>
+                        <td class="p-3 text-slate-600">{{med.dosage || '-'}}</td>
+                        <td class="p-3 text-slate-600">{{med.route || '-'}}</td>
+                        <td class="p-3 text-slate-600">{{med.frequency || '-'}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div *ngIf="getMedicationArray(note.plan).length === 0" class="p-6 text-center text-sm text-slate-500 italic">
+                    {{ parseMedications(note.plan) }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between mt-auto">
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span class="text-xs font-bold text-emerald-700">Inventory: In Stock (450 units)</span>
+                </div>
+                <div class="flex gap-3">
+                  <button (click)="generateRxLabel(note)" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer">Print Label</button>
+                  <button (click)="startDispense(note.id)" class="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm cursor-pointer">Verify & Dispense</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVENTORY VIEW -->
+      <div *ngIf="pharmacistView === 'inventory'" class="p-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Items</div>
+            <div class="text-2xl font-bold text-slate-800">{{inventoryData.length}}</div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">In Stock</div>
+            <div class="text-2xl font-bold text-emerald-600">6</div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Low Stock</div>
+            <div class="text-2xl font-bold text-amber-600">2</div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Out of Stock</div>
+            <div class="text-2xl font-bold text-rose-600">1</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th class="text-left px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Drug Name</th>
+                <th class="text-left px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">NDC Code</th>
+                <th class="text-center px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Stock</th>
+                <th class="text-center px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Reorder Point</th>
+                <th class="text-center px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Expiry</th>
+                <th class="text-center px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of inventoryData" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                <td class="px-5 py-3 font-bold text-slate-800">{{item.drug}}</td>
+                <td class="px-5 py-3 font-mono text-xs text-slate-500">{{item.ndc}}</td>
+                <td class="px-5 py-3 text-center font-bold" [class.text-slate-800]="item.status === 'In Stock'" [class.text-amber-600]="item.status === 'Low'" [class.text-rose-600]="item.status === 'Critical' || item.status === 'Out of Stock'">{{item.stock}}</td>
+                <td class="px-5 py-3 text-center text-slate-500">{{item.reorder}}</td>
+                <td class="px-5 py-3 text-center text-slate-500">{{item.expiry}}</td>
+                <td class="px-5 py-3 text-center">
+                  <span class="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
+                    [class.bg-emerald-100]="item.status === 'In Stock'" [class.text-emerald-800]="item.status === 'In Stock'"
+                    [class.bg-amber-100]="item.status === 'Low'" [class.text-amber-800]="item.status === 'Low'"
+                    [class.bg-rose-100]="item.status === 'Critical' || item.status === 'Out of Stock'" [class.text-rose-800]="item.status === 'Critical' || item.status === 'Out of Stock'">
+                    {{item.status}}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PATIENTS VIEW -->
+      <div *ngIf="pharmacistView === 'patients'" class="p-8">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th class="text-left px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Patient</th>
+                <th class="text-left px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">MRN</th>
+                <th class="text-center px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Age</th>
+                <th class="text-center px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Gender</th>
+                <th class="text-center px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Last Visit</th>
+                <th class="text-center px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Active Rx</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of patientDirectory" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                <td class="px-5 py-3">
+                  <div class="flex items-center gap-3">
+                    <img [src]="p.avatar" class="w-9 h-9 rounded-full border border-slate-200">
+                    <span class="font-bold text-slate-800">{{p.name}}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-3 font-mono text-xs text-slate-500">#{{p.mrn}}</td>
+                <td class="px-5 py-3 text-center text-slate-700">{{p.age}}</td>
+                <td class="px-5 py-3 text-center text-slate-500">{{p.gender}}</td>
+                <td class="px-5 py-3 text-center text-slate-500">{{p.lastVisit}}</td>
+                <td class="px-5 py-3 text-center">
+                  <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full">{{p.activeRx}} Active</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- Dispensing Simulation Modal -->
+  <div *ngIf="dispenseStep > 0" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-100 relative overflow-hidden">
+      
+      <!-- Header -->
+      <h3 class="text-xl font-bold text-slate-800 mb-6 text-center">Dispensing Simulation</h3>
+
+      <!-- Step 1: Checking Interactions -->
+      <div class="flex items-center gap-4 mb-5 p-3 rounded-lg" [class.bg-blue-50]="dispenseStep === 1" [class.opacity-50]="dispenseStep > 1">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" 
+             [class.bg-blue-100]="dispenseStep === 1" 
+             [class.text-blue-600]="dispenseStep === 1"
+             [class.bg-emerald-100]="dispenseStep > 1"
+             [class.text-emerald-600]="dispenseStep > 1">
+          <svg *ngIf="dispenseStep === 1" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <svg *ngIf="dispenseStep > 1" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <div>
+          <div class="font-bold text-slate-800 text-sm">Verifying Drug Interactions</div>
+          <div class="text-xs text-slate-500">Checking EHR allergies and contraindications...</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Automated Dispensing -->
+      <div class="flex items-center gap-4 mb-5 p-3 rounded-lg transition-all" 
+           [class.opacity-40]="dispenseStep < 2"
+           [class.bg-blue-50]="dispenseStep === 2"
+           [class.opacity-50]="dispenseStep > 2">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+             [class.bg-slate-100]="dispenseStep < 2"
+             [class.text-slate-400]="dispenseStep < 2"
+             [class.bg-blue-100]="dispenseStep === 2" 
+             [class.text-blue-600]="dispenseStep === 2"
+             [class.bg-emerald-100]="dispenseStep > 2"
+             [class.text-emerald-600]="dispenseStep > 2">
+          <svg *ngIf="dispenseStep < 2" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          <svg *ngIf="dispenseStep === 2" class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          <svg *ngIf="dispenseStep > 2" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <div>
+          <div class="font-bold text-slate-800 text-sm">Automated Dispensing Cabinet</div>
+          <div class="text-xs text-slate-500">Sending commands to pharmacy robot...</div>
+        </div>
+      </div>
+
+      <!-- Step 3: Success -->
+      <div class="flex items-center gap-4 p-3 rounded-lg transition-all"
+           [class.opacity-40]="dispenseStep < 3"
+           [class.bg-emerald-50]="dispenseStep === 3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+             [class.bg-slate-100]="dispenseStep < 3"
+             [class.text-slate-400]="dispenseStep < 3"
+             [class.bg-emerald-100]="dispenseStep === 3" 
+             [class.text-emerald-600]="dispenseStep === 3">
+          <svg *ngIf="dispenseStep < 3" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <svg *ngIf="dispenseStep === 3" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <div class="font-bold text-slate-800 text-sm">Ready for Patient Pickup</div>
+          <div class="text-xs" [class.text-slate-500]="dispenseStep < 3" [class.text-emerald-600]="dispenseStep === 3">Prescription completely verified & packed.</div>
+        </div>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="mt-8 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full bg-blue-600 transition-all duration-500 ease-out" 
+             [style.width]="dispenseStep === 1 ? '33%' : (dispenseStep === 2 ? '66%' : '100%')"
+             [class.bg-emerald-500]="dispenseStep === 3"></div>
+      </div>
+    </div>
+  </div>
+
+</ng-container>
+
+  <!-- Under Construction Modal -->
+  <div *ngIf="mockActionMessage" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center transform transition-all duration-300 scale-100">
+      <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+      </div>
+      <h3 class="text-xl font-bold text-slate-800 mb-2">Simulated Action</h3>
+      <p class="text-slate-500 mb-6 text-sm">{{mockActionMessage}}</p>
+      <button (click)="mockActionMessage = null" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded-xl font-bold transition-colors cursor-pointer">Close Simulation</button>
+    </div>
+  </div>
+
+<!-- Full Chart Modal (Pharmacist) -->
+<div *ngIf="viewingChartNote" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] mx-4 flex flex-col overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800">Patient Clinical Chart</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Rx ID: {{viewingChartNote.id.substring(0,8)}} — {{viewingChartNote.created_at | date:'medium'}}</p>
+      </div>
+      <button (click)="viewingChartNote = null" class="p-2 rounded-md hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1 space-y-6">
+      <div class="flex items-center gap-4 mb-2">
+        <img [src]="getMockPatientForNote(viewingChartNote).avatar" class="w-16 h-16 rounded-full border-2 border-slate-200 shadow-sm">
+        <div>
+          <h3 class="text-xl font-bold text-slate-800">{{ getMockPatientForNote(viewingChartNote).name }}</h3>
+          <p class="text-sm text-slate-500">{{ getMockPatientForNote(viewingChartNote).age }} yrs | {{ getMockPatientForNote(viewingChartNote).gender }} | MRN: #{{ getMockPatientForNote(viewingChartNote).mrn }} | Allergies: {{ getMockPatientForNote(viewingChartNote).allergies }}</p>
+        </div>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-blue-700 uppercase tracking-wider mb-2">Chief Complaint</h4>
+        <p class="text-sm text-slate-800">{{viewingChartNote.subjective?.chiefComplaint || 'Not recorded'}}</p>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">History of Present Illness</h4>
+        <p class="text-sm text-slate-700 whitespace-pre-wrap">{{viewingChartNote.subjective?.historyOfPresentIllness || 'Not recorded'}}</p>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Physical Examination</h4>
+        <p class="text-sm text-slate-700 whitespace-pre-wrap">{{viewingChartNote.objective?.physicalExam || (viewingChartNote.objective | json)}}</p>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-2">Primary Diagnosis</h4>
+        <p class="text-sm text-slate-800 font-medium">{{viewingChartNote.assessment?.primaryDiagnosis || 'Not recorded'}}</p>
+        <p class="text-sm text-slate-600 mt-2 whitespace-pre-wrap">{{parseAssessment(viewingChartNote.assessment)}}</p>
+      </div>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-2">Medications & Plan</h4>
+        <p class="text-sm text-slate-800 whitespace-pre-wrap">{{parseMedications(viewingChartNote.plan)}}</p>
+      </div>
+      <div *ngIf="viewingChartNote.plan?.followUp" class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Follow-Up</h4>
+        <p class="text-sm text-slate-700">{{viewingChartNote.plan.followUp}}</p>
+      </div>
+      <div *ngIf="viewingChartNote.plan?.redFlagWarnings" class="bg-rose-50 border border-rose-200 rounded-xl p-4">
+        <h4 class="text-xs font-bold text-rose-700 uppercase tracking-wider mb-2">Red Flag Warnings</h4>
+        <p class="text-sm text-rose-800 whitespace-pre-wrap">{{viewingChartNote.plan.redFlagWarnings}}</p>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 bg-white flex justify-end shrink-0">
+      <button (click)="viewingChartNote = null" class="px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-bold transition-colors cursor-pointer">Close Chart</button>
+    </div>
+  </div>
+</div>
+
+<!-- Patient Summary Modal (Patient Portal) -->
+<div *ngIf="viewingSummaryNote" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] mx-4 flex flex-col overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 bg-emerald-50 flex items-center justify-between shrink-0">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800">Your Visit Summary (Plain English)</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Visit on {{viewingSummaryNote.created_at | date:'medium'}}</p>
+      </div>
+      <button (click)="viewingSummaryNote = null" class="p-2 rounded-md hover:bg-emerald-100 text-slate-500 transition-colors cursor-pointer">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="p-6 overflow-y-auto flex-1 space-y-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-5">
+        <h4 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          What You Told the Doctor
+        </h4>
+        <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{{plainEnglishSubjective(viewingSummaryNote.subjective)}}</p>
+      </div>
+      <div class="bg-purple-50 border border-purple-200 rounded-xl p-5">
+        <h4 class="text-sm font-bold text-purple-800 mb-2 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+          What the Doctor Found
+        </h4>
+        <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{{plainEnglishObjective(viewingSummaryNote.objective)}}</p>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
+        <h4 class="text-sm font-bold text-amber-800 mb-2 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          The Diagnosis
+        </h4>
+        <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{{plainEnglishAssessment(viewingSummaryNote.assessment)}}</p>
+      </div>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+        <h4 class="text-sm font-bold text-emerald-800 mb-2 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+          Your Treatment Plan
+        </h4>
+        <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{{plainEnglishPlan(viewingSummaryNote.plan)}}</p>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 bg-white flex justify-end shrink-0">
+      <button (click)="viewingSummaryNote = null" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition-colors cursor-pointer">Close Summary</button>
+    </div>
+  </div>
+</div>
+
+<!-- PATIENT PORTAL -->
+<ng-container *ngIf="loginRole === 'Patient'">
+  <div class="min-h-screen bg-slate-50 font-sans">
+    <!-- Patient Navbar -->
+    <div class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+        </div>
+        <span class="text-xl font-bold text-slate-800 tracking-tight">MyHealth<span class="text-emerald-600">Portal</span></span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="relative p-2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white"></span>
+        </button>
+        <div class="h-8 w-px bg-slate-200"></div>
+        <div class="flex items-center gap-3">
+          <img src="https://i.pravatar.cc/150?u=marcus_reynolds" class="w-9 h-9 rounded-full border border-slate-200 shadow-sm">
+          <div class="hidden md:block">
+            <div class="text-sm font-bold text-slate-800 leading-none">Marcus Reynolds</div>
+            <div class="text-[10px] text-slate-500 mt-1">Patient ID: 88492</div>
+          </div>
+        </div>
+        <button (click)="handleLogout()" class="ml-4 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">Sign Out</button>
+      </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto p-6 md:p-8">
+      <!-- Welcome Hero -->
+      <div class="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-2xl p-8 text-white mb-8 shadow-lg relative overflow-hidden">
+        <svg class="absolute right-0 top-0 opacity-10 w-64 h-64 -mt-10 -mr-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+        <h1 class="text-3xl font-bold mb-2 relative z-10">Good evening, Marcus.</h1>
+        <p class="text-emerald-100 mb-6 max-w-xl relative z-10">Your clinical records, prescriptions, and visit summaries are up to date. You have {{pharmacistPrescriptions.length}} new prescriptions ready for pickup.</p>
+        <div class="flex gap-4 relative z-10">
+          <button (click)="mockAction('Loading Secure Lab Results')" class="bg-white text-emerald-800 px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-emerald-50 transition-colors cursor-pointer">View Lab Results</button>
+          <button (click)="mockAction('Opening Secure Messaging Portal')" class="bg-emerald-700 border border-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-colors cursor-pointer">Message Doctor</button>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Upcoming Visits</div>
+            <div class="text-xl font-bold text-slate-800">None Scheduled</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Active Prescriptions</div>
+            <div class="text-xl font-bold text-slate-800">{{pharmacistPrescriptions.length}} Available</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Recent Documents</div>
+            <div class="text-xl font-bold text-slate-800">{{pharmacistPrescriptions.length}} Summaries</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Visits List -->
+      <h2 class="text-xl font-bold text-slate-800 mb-6">Recent Clinical Visits</h2>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div *ngIf="pharmacistPrescriptions.length === 0" class="p-8 text-center text-slate-500">
+          No recent clinical visits found.
+        </div>
+        
+        <div *ngFor="let note of pharmacistPrescriptions; let i = index" class="p-6 border-b border-slate-100 hover:bg-slate-50 transition-colors" [class.border-b-0]="i === pharmacistPrescriptions.length - 1">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex gap-4">
+              <div class="w-16 h-16 bg-slate-100 rounded-xl flex flex-col items-center justify-center border border-slate-200 shrink-0 shadow-inner">
+                <span class="text-xs font-bold text-slate-500 uppercase">{{note.created_at | date:'MMM'}}</span>
+                <span class="text-xl font-black text-slate-800 leading-none">{{note.created_at | date:'dd'}}</span>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-slate-800">Internal Medicine Consultation</h3>
+                <p class="text-sm text-slate-500 mb-2">Dr. Sarah • ScribeOS Clinic</p>
+                
+                <!-- Patient Read-Only Preview -->
+                <div class="bg-slate-50 rounded-lg p-3 text-sm text-slate-700 max-w-2xl border border-slate-200 shadow-sm">
+                  <div class="font-bold mb-1 text-[10px] uppercase tracking-wider text-slate-400">Doctor's Assessment Overview:</div>
+                  <div class="line-clamp-2 italic">{{ parseAssessment(note.assessment) }}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex flex-col items-end gap-2 w-full md:w-auto mt-4 md:mt-0">
+              <div class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 mb-1 flex items-center gap-1.5 self-end">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Time: {{note.created_at | date:'shortTime'}}
+              </div>
+              <div class="flex flex-col gap-2 w-full">
+                <button (click)="viewingSummaryNote = note" class="w-full md:w-48 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2 cursor-pointer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>View Full Summary</button>
+                <button (click)="downloadPatientPdf(note)" class="w-full md:w-48 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2 cursor-pointer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Download PDF</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- OTHER ROLES -->
+<ng-container *ngIf="loginRole === 'Nurse'">
+  <div class="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-sans">
+    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl text-center max-w-md w-full">
+      <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-800 mb-2">Nurse Portal</h1>
+      <p class="text-slate-500 mb-8 text-sm leading-relaxed">This secure dashboard is currently undergoing enterprise compliance checks. Access will be granted shortly.</p>
+      <button (click)="handleLogout()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-xl font-bold transition-colors cursor-pointer shadow-sm">Secure Sign Out</button>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="loginRole === 'Administrator'">
+  <div class="min-h-screen bg-slate-100 font-sans flex flex-col">
+    <!-- Admin Navbar -->
+    <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-20 shadow-md">
+      <div class="flex items-center gap-3">
+        <div class="bg-blue-500 p-2 rounded-lg"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></div>
+        <div>
+          <h1 class="text-lg font-bold text-white leading-none">ScribeOS Enterprise</h1>
+          <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Global Administration Command Center</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+          <span class="text-xs font-bold text-slate-300 uppercase">System Operational</span>
+        </div>
+        <button (click)="handleLogout()" class="text-sm font-bold text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> Sign Out</button>
+      </div>
+    </div>
+
+    <div class="p-8 flex-1 overflow-y-auto">
+      <!-- High Level Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+          <div class="absolute -right-4 -top-4 opacity-5"><svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg></div>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Rx Processed</span>
+          <span class="text-3xl font-black text-slate-800 mt-2">14,293</span>
+          <div class="mt-auto pt-4 flex items-center text-xs font-bold text-emerald-500"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg> +12.5% this week</div>
+        </div>
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+          <div class="absolute -right-4 -top-4 opacity-5"><svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Doctors</span>
+          <span class="text-3xl font-black text-blue-600 mt-2">128</span>
+          <div class="mt-auto pt-4 flex items-center text-xs font-bold text-slate-500">Across 14 Departments</div>
+        </div>
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+          <div class="absolute -right-4 -top-4 opacity-5"><svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"></path></svg></div>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Inventory Value</span>
+          <span class="text-3xl font-black text-emerald-600 mt-2">$2.4M</span>
+          <div class="mt-auto pt-4 flex items-center text-xs font-bold text-emerald-500">Optimum Stock Levels</div>
+        </div>
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+          <div class="absolute -right-4 -top-4 opacity-5"><svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg></div>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Patients</span>
+          <span class="text-3xl font-black text-purple-600 mt-2">45,912</span>
+          <div class="mt-auto pt-4 flex items-center text-xs font-bold text-emerald-500"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg> +340 this month</div>
+        </div>
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col relative overflow-hidden">
+          <div class="absolute -right-4 -top-4 opacity-5"><svg class="w-32 h-32" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></div>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">API Health</span>
+          <span class="text-3xl font-black text-slate-800 mt-2">99.9%</span>
+          <div class="mt-auto pt-4 flex items-center text-xs font-bold text-slate-500">142ms avg response</div>
+        </div>
+      </div>
+
+      <!-- Main Dash Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Global Rx Operations (Anonymized) -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col">
+          <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 rounded-t-xl flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <h2 class="font-bold text-slate-800">Global Rx Operations</h2>
+            </div>
+            <span class="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded uppercase tracking-wider border border-rose-100 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg> HIPAA Strict Mode</span>
+          </div>
+          <div class="p-0 overflow-y-auto max-h-[400px]">
+            <table class="w-full text-left text-sm border-collapse">
+              <thead class="bg-white sticky top-0 border-b border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th class="p-4">Time</th>
+                  <th class="p-4">Patient (Anonymized)</th>
+                  <th class="p-4">Attending Doctor</th>
+                  <th class="p-4">Prescribed Meds</th>
+                  <th class="p-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let note of pharmacistPrescriptions" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <td class="p-4 whitespace-nowrap">
+                    <span class="text-xs font-bold text-slate-800">{{note.created_at | date:'shortTime'}}</span><br>
+                    <span class="text-[10px] text-slate-400 uppercase">{{note.created_at | date:'mediumDate'}}</span>
+                  </td>
+                  <td class="p-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div>
+                      <div>
+                        <span class="font-mono font-bold text-slate-700">{{getAnonymizedPatient(note).name}}</span><br>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">MRN: HIDDEN</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="p-4">
+                    <div class="flex items-center gap-2 mb-0.5">
+                      <img src="https://ui-avatars.com/api/?name=Sarah+Chen&background=eff6ff&color=1d4ed8" class="w-5 h-5 rounded-full">
+                      <span class="font-bold text-slate-700 text-xs">Dr. Sarah Chen</span>
+                    </div>
+                    <span class="text-[10px] text-slate-500 ml-7">Internal Medicine</span>
+                  </td>
+                  <td class="p-4">
+                    <div class="text-xs text-slate-600 line-clamp-2 max-w-xs">{{parseMedications(note.plan)}}</div>
+                  </td>
+                  <td class="p-4 text-center">
+                    <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-100 uppercase">Pending</span>
+                  </td>
+                </tr>
+                <tr *ngIf="pharmacistPrescriptions.length === 0">
+                  <td colspan="5" class="p-8 text-center text-slate-500 italic">No prescriptions have been generated yet. Wait for a doctor to sign a SOAP note.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Inventory Global Oversight -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col">
+          <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 rounded-t-xl flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+              <h2 class="font-bold text-slate-800">Inventory Global Oversight</h2>
+            </div>
+            <button class="text-xs font-bold text-blue-600 hover:text-blue-800">View All</button>
+          </div>
+          <div class="p-0 overflow-y-auto max-h-[400px]">
+            <table class="w-full text-left text-sm border-collapse">
+              <thead class="bg-white sticky top-0 border-b border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th class="p-4">Drug (Top Moving)</th>
+                  <th class="p-4 text-center">Stock</th>
+                  <th class="p-4 text-center">Status</th>
+                  <th class="p-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of inventoryData | slice:0:10" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <td class="p-4">
+                    <span class="font-bold text-slate-800">{{item.drug}}</span><br>
+                    <span class="text-[10px] font-mono text-slate-400">{{item.ndc}}</span>
+                  </td>
+                  <td class="p-4 text-center font-bold" [class.text-amber-600]="item.status === 'Low'" [class.text-rose-600]="item.status === 'Critical' || item.status === 'Out of Stock'">{{item.stock}}</td>
+                  <td class="p-4 text-center">
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
+                      [class.bg-emerald-100]="item.status === 'In Stock'" [class.text-emerald-800]="item.status === 'In Stock'"
+                      [class.bg-amber-100]="item.status === 'Low'" [class.text-amber-800]="item.status === 'Low'"
+                      [class.bg-rose-100]="item.status === 'Critical' || item.status === 'Out of Stock'" [class.text-rose-800]="item.status === 'Critical' || item.status === 'Out of Stock'">
+                      {{item.status}}
+                    </span>
+                  </td>
+                  <td class="p-4 text-center">
+                    <button class="text-xs font-bold text-slate-500 hover:text-blue-600 uppercase tracking-wider">Audit</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+</ng-container>
+
 <ng-template #loginPage>
   <div class="h-screen w-screen bg-slate-50 flex items-center justify-center relative overflow-hidden font-sans">
     
@@ -280,13 +987,21 @@
       <div class="mt-8 pt-6 border-t border-slate-100 w-full">
         <h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3 text-center">Demo Credentials</h3>
         <div class="grid grid-cols-2 gap-3 text-xs">
-          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 text-center">
-            <div class="text-slate-700 font-bold mb-0.5">Doctor</div>
-            <div class="text-slate-500 font-mono text-[10px]">dr.sarah&#64;scribe.ai</div>
+          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-slate-200 hover:border-blue-400 hover:shadow-md transition-all" (click)="fillCredentials('pharmacist@scribe.ai')">
+            <div class="text-slate-700 font-bold mb-0.5 pointer-events-none">Pharmacist</div>
+            <div class="text-slate-500 font-mono text-[10px] pointer-events-none">pharmacist&#64;scribe.ai</div>
           </div>
-          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 text-center">
-            <div class="text-slate-700 font-bold mb-0.5">Administrator</div>
-            <div class="text-slate-500 font-mono text-[10px]">admin&#64;scribe.ai</div>
+          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-slate-200 hover:border-emerald-400 hover:shadow-md transition-all" (click)="fillCredentials('patient@scribe.ai')">
+            <div class="text-slate-700 font-bold mb-0.5 pointer-events-none">Patient</div>
+            <div class="text-slate-500 font-mono text-[10px] pointer-events-none">patient&#64;scribe.ai</div>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-slate-200 hover:border-blue-400 hover:shadow-md transition-all" (click)="fillCredentials('dr.sarah@scribe.ai')">
+            <div class="text-slate-700 font-bold mb-0.5 pointer-events-none">Doctor</div>
+            <div class="text-slate-500 font-mono text-[10px] pointer-events-none">dr.sarah&#64;scribe.ai</div>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-slate-200 hover:border-slate-400 hover:shadow-md transition-all" (click)="fillCredentials('admin@scribe.ai')">
+            <div class="text-slate-700 font-bold mb-0.5 pointer-events-none">Administrator</div>
+            <div class="text-slate-500 font-mono text-[10px] pointer-events-none">admin&#64;scribe.ai</div>
           </div>
         </div>
       </div>
