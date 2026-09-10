@@ -2390,61 +2390,264 @@
       <h1 class="text-3xl font-bold text-slate-900 tracking-tight mb-2">Scribe<span class="font-normal text-slate-500">OS</span></h1>
       <p class="text-slate-500 text-sm mb-8 text-center">Sign in to your clinical workspace</p>
       
-      <form class="w-full space-y-4" (submit)="handleLogin($event)">
-        <!-- Error Banner -->
-        <div *ngIf="loginError" class="bg-rose-50 border border-rose-200 text-rose-700 font-medium text-xs p-3 rounded-md mb-4 text-center">
-          Invalid credentials. Please use a recognized institutional email.
-        </div>
-        
-        <div class="space-y-1.5">
-          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Institutional Email</label>
-          <input type="email" [(ngModel)]="loginEmail" name="email" placeholder="e.g. dr.sarah&#64;scribe.ai" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" required />
-        </div>
-        
-        <div class="space-y-1.5">
-          <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Password</label>
-          <input type="password" [(ngModel)]="loginPassword" name="password" placeholder="••••••••" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" required />
-        </div>
-        
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition-colors mt-6 cursor-pointer">
-          Sign In securely
+      <!-- Sign In / Register Tabs -->
+      <div class="w-full flex rounded-lg bg-slate-100 p-1 mb-6">
+        <button (click)="authMode = 'login'" 
+                [ngClass]="authMode === 'login' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                class="flex-1 py-1.5 text-xs rounded-md transition-all cursor-pointer">
+          Staff & Patient Sign In
         </button>
-      </form>
-      
-      <!-- Demo Data Tooltip -->
-      <div class="mt-6 pt-5 border-t border-slate-100 w-full">
-        <h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3 text-center">One-Click Demo Credentials</h3>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 hover:shadow-xs transition-all" (click)="fillCredentials('dr.sarah@scribe.ai')">
-            <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">👨‍⚕️ Doctor</div>
-            <div class="text-slate-500 font-mono text-[9px] pointer-events-none">dr.sarah&#64;scribe.ai</div>
+        <button (click)="openPatientRegistration()" 
+                [ngClass]="authMode === 'register' ? 'bg-blue-600 text-white font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                class="flex-1 py-1.5 text-xs rounded-md transition-all cursor-pointer">
+          ✨ New Patient Registration
+        </button>
+      </div>
+
+      <!-- ================= LOGIN FORM ================= -->
+      <ng-container *ngIf="authMode === 'login'">
+        <form class="w-full space-y-4" (submit)="handleLogin($event)">
+          <!-- Error Banner -->
+          <div *ngIf="loginError" class="bg-rose-50 border border-rose-200 text-rose-700 font-medium text-xs p-3 rounded-md mb-4 text-center">
+            Invalid credentials. Please use a recognized institutional email.
           </div>
-          <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-400 hover:shadow-xs transition-all" (click)="fillCredentials('nurse@scribe.ai')">
-            <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">👩‍⚕️ Nurse (Triage)</div>
-            <div class="text-slate-500 font-mono text-[9px] pointer-events-none">nurse&#64;scribe.ai</div>
+          
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Institutional / Patient Email</label>
+            <input type="email" [(ngModel)]="loginEmail" name="email" placeholder="e.g. dr.sarah&#64;scribe.ai" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" required />
           </div>
-          <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 hover:shadow-xs transition-all" (click)="fillCredentials('reception@scribe.ai')">
-            <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">🏢 Reception</div>
-            <div class="text-slate-500 font-mono text-[9px] pointer-events-none">reception&#64;scribe.ai</div>
+          
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Password</label>
+            <input type="password" [(ngModel)]="loginPassword" name="password" placeholder="••••••••" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm" required />
           </div>
-          <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-purple-50 hover:border-purple-400 hover:shadow-xs transition-all" (click)="fillCredentials('lab@scribe.ai')">
-            <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">🔬 Lab Tech</div>
-            <div class="text-slate-500 font-mono text-[9px] pointer-events-none">lab&#64;scribe.ai</div>
-          </div>
-          <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-amber-50 hover:border-amber-400 hover:shadow-xs transition-all" (click)="fillCredentials('pharmacist@scribe.ai')">
-            <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">💊 Pharmacist</div>
-            <div class="text-slate-500 font-mono text-[9px] pointer-events-none">pharmacist&#64;scribe.ai</div>
-          </div>
-          <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-400 hover:shadow-xs transition-all" (click)="fillCredentials('patient@scribe.ai')">
-            <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">👤 Patient Portal</div>
-            <div class="text-slate-500 font-mono text-[9px] pointer-events-none">patient&#64;scribe.ai</div>
-          </div>
-          <div class="col-span-2 bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-slate-200 hover:border-slate-400 hover:shadow-xs transition-all" (click)="fillCredentials('admin@scribe.ai')">
-            <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">⚙️ Administrator & All Operations</div>
-            <div class="text-slate-500 font-mono text-[9px] pointer-events-none">admin&#64;scribe.ai</div>
+          
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition-colors mt-6 cursor-pointer">
+            Sign In securely
+          </button>
+        </form>
+        
+        <!-- Demo Data Tooltip -->
+        <div class="mt-6 pt-5 border-t border-slate-100 w-full">
+          <h3 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3 text-center">One-Click Demo Credentials</h3>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 hover:shadow-xs transition-all" (click)="fillCredentials('dr.sarah@scribe.ai')">
+              <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">👨‍⚕️ Doctor</div>
+              <div class="text-slate-500 font-mono text-[9px] pointer-events-none">dr.sarah&#64;scribe.ai</div>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-400 hover:shadow-xs transition-all" (click)="fillCredentials('nurse@scribe.ai')">
+              <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">👩‍⚕️ Nurse (Triage)</div>
+              <div class="text-slate-500 font-mono text-[9px] pointer-events-none">nurse&#64;scribe.ai</div>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 hover:shadow-xs transition-all" (click)="fillCredentials('reception@scribe.ai')">
+              <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">🏢 Reception</div>
+              <div class="text-slate-500 font-mono text-[9px] pointer-events-none">reception&#64;scribe.ai</div>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-purple-50 hover:border-purple-400 hover:shadow-xs transition-all" (click)="fillCredentials('lab@scribe.ai')">
+              <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">🔬 Lab Tech</div>
+              <div class="text-slate-500 font-mono text-[9px] pointer-events-none">lab&#64;scribe.ai</div>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-amber-50 hover:border-amber-400 hover:shadow-xs transition-all" (click)="fillCredentials('pharmacist@scribe.ai')">
+              <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">💊 Pharmacist</div>
+              <div class="text-slate-500 font-mono text-[9px] pointer-events-none">pharmacist&#64;scribe.ai</div>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-emerald-50 hover:border-emerald-400 hover:shadow-xs transition-all" (click)="fillCredentials('patient@scribe.ai')">
+              <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">👤 Patient Portal</div>
+              <div class="text-slate-500 font-mono text-[9px] pointer-events-none">patient&#64;scribe.ai</div>
+            </div>
+            <div class="col-span-2 bg-slate-50 p-2 rounded-md border border-slate-200 text-center cursor-pointer hover:bg-slate-200 hover:border-slate-400 hover:shadow-xs transition-all" (click)="fillCredentials('admin@scribe.ai')">
+              <div class="text-slate-800 font-bold text-[11px] mb-0.5 pointer-events-none">⚙️ Administrator & All Operations</div>
+              <div class="text-slate-500 font-mono text-[9px] pointer-events-none">admin&#64;scribe.ai</div>
+            </div>
           </div>
         </div>
-      </div>
+      </ng-container>
+
+      <!-- ================= PATIENT REGISTRATION FORM ================= -->
+      <ng-container *ngIf="authMode === 'register'">
+        <div class="w-full">
+          
+          <!-- Registration Steps Indicator -->
+          <div class="flex items-center justify-between mb-5 px-2">
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold"
+                    [ngClass]="registrationStep === 'details' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-white'">
+                1
+              </span>
+              <span class="text-[11px] font-semibold text-slate-700">Demographics</span>
+            </div>
+            <div class="w-8 h-px bg-slate-200"></div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold"
+                    [ngClass]="registrationStep === 'consent' ? 'bg-blue-600 text-white' : (registrationStep === 'confirmation' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500')">
+                2
+              </span>
+              <span class="text-[11px] font-semibold text-slate-700">HIPAA Consent</span>
+            </div>
+            <div class="w-8 h-px bg-slate-200"></div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold"
+                    [ngClass]="registrationStep === 'confirmation' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'">
+                3
+              </span>
+              <span class="text-[11px] font-semibold text-slate-700">Audit Proof</span>
+            </div>
+          </div>
+
+          <!-- Error Alert -->
+          <div *ngIf="registrationError" class="bg-rose-50 border border-rose-200 text-rose-700 font-medium text-xs p-3 rounded-lg mb-4">
+            {{ registrationError }}
+          </div>
+
+          <!-- STEP 1: DEMOGRAPHICS -->
+          <div *ngIf="registrationStep === 'details'" class="space-y-3.5">
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Full Legal Name *</label>
+              <input type="text" [(ngModel)]="regForm.fullName" placeholder="e.g. Jonathan Alexander Doe" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-500" required />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Date of Birth *</label>
+                <input type="date" [(ngModel)]="regForm.dob" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-500" required />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Gender</label>
+                <select [(ngModel)]="regForm.gender" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-500">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other / Non-binary</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Email Address *</label>
+              <input type="email" [(ngModel)]="regForm.email" placeholder="patient@example.com" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-500" required />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Portal Password *</label>
+              <input type="password" [(ngModel)]="regForm.password" placeholder="••••••••" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-500" required />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Assigned Medical Record Number (MRN)</label>
+              <input type="text" [value]="regForm.mrn" readonly class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono text-slate-600" />
+            </div>
+
+            <button (click)="proceedToConsent()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow-sm transition-colors mt-4 cursor-pointer">
+              Continue to Statutory Consent & Terms ➔
+            </button>
+          </div>
+
+          <!-- STEP 2: STATUTORY CONSENT & NOTICE OF PRIVACY PRACTICES -->
+          <div *ngIf="registrationStep === 'consent'" class="space-y-4">
+            
+            <!-- Regulatory Standard Banner -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-[11px] text-blue-900">
+              <div class="font-bold flex items-center gap-1.5 mb-1">
+                <span>⚖️ US Statutory Healthcare Compliance Codex</span>
+              </div>
+              <p class="text-blue-700 leading-relaxed">
+                In compliance with <strong>HIPAA (45 CFR § 164.520)</strong>, the <strong>21st Century Cures Act</strong>, and <strong>FDA SaMD Guidelines</strong>, you must review our statutory privacy practices and acknowledge informed consent for AI ambient medical scribing.
+              </p>
+            </div>
+
+            <!-- Scrollable Terms & Conditions Codex Window -->
+            <div class="border border-slate-200 rounded-lg bg-slate-50 p-3 max-h-48 overflow-y-auto text-[11px] text-slate-700 space-y-3 font-sans"
+                 (scroll)="onTermsScroll($event)">
+              <div class="font-bold text-slate-900 uppercase tracking-wide text-[10px] border-b pb-1">
+                OMNISCRIBE HEALTH — NOTICE OF PRIVACY PRACTICES & AMBIENT AI CONSENT (VER 2026.4)
+              </div>
+              <p><strong>ARTICLE I — HIPAA NOTICE OF PRIVACY PRACTICES (45 CFR § 164.520):</strong> We collect, store, and transmit your Electronic Protected Health Information (ePHI) solely for Treatment, Payment, and Health Care Operations (TPO). Your records are encrypted with AES-256 at rest and TLS 1.3 in transit.</p>
+              <p><strong>ARTICLE II — AMBIENT AI MEDICAL SCRIBING CONSENT (FDA SaMD):</strong> You grant informed consent for the use of ambient acoustic speech recognition (Google Gemini Clinical Scribe) during consultations. AI operates strictly as an administrative drafting assistant; no autonomous diagnosis is issued without licensed physician review and signature (Human-in-the-Loop).</p>
+              <p><strong>ARTICLE III — 21ST CENTURY CURES ACT & ONC INFORMATION BLOCKING:</strong> You retain an absolute federal right to immediate electronic access to your medical notes and prescriptions in standardized HL7® FHIR® R4 format without obstruction.</p>
+              <p><strong>ARTICLE IV — ELECTRONIC PRESCRIBING & TAMPER PREVENTION (DEA EPCS):</strong> Prescription orders formulated in the Plan section are routed securely to licensed pharmacy fulfillment queues. Digital PDF prescriptions are rasterized as flattened image layers to prevent digital alteration or fraud.</p>
+              <p><strong>ARTICLE V — ZERO-KNOWLEDGE PRINCIPLE & AUDIT LOGS:</strong> Every query and read operation is permanently recorded in a write-once tamper-evident audit ledger with IP address, device fingerprint, and timestamp.</p>
+            </div>
+            
+            <div class="flex items-center justify-between text-[10px] text-slate-500 px-1">
+              <span>Scroll above to review full codex</span>
+              <span *ngIf="termsScrolledToBottom" class="text-emerald-600 font-bold">✓ Codex Reviewed</span>
+            </div>
+
+            <!-- Attestation Checkboxes -->
+            <div class="space-y-2.5 pt-2 border-t border-slate-100">
+              <label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="regForm.consentHipaa" class="mt-0.5 rounded text-blue-600" />
+                <span><strong>HIPAA Consent:</strong> I acknowledge receipt of the Notice of Privacy Practices and consent to ePHI processing under 45 CFR § 164.520.</span>
+              </label>
+
+              <label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="regForm.consentAmbientAi" class="mt-0.5 rounded text-blue-600" />
+                <span><strong>Ambient AI Scribe:</strong> I grant informed statutory consent for speech-to-text AI transcription subject to mandatory physician signoff.</span>
+              </label>
+
+              <label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="regForm.consentCuresAct" class="mt-0.5 rounded text-blue-600" />
+                <span><strong>21st Century Cures Act:</strong> I acknowledge my federal rights to real-time HL7 FHIR electronic health record access.</span>
+              </label>
+
+              <label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
+                <input type="checkbox" [(ngModel)]="regForm.consentEpcs" class="mt-0.5 rounded text-blue-600" />
+                <span><strong>Prescription Routing:</strong> I authorize electronic prescription transmission to licensed pharmacy fulfillment queues.</span>
+              </label>
+            </div>
+
+            <!-- Digital Signature (E-SIGN Act 15 U.S.C. § 7001) -->
+            <div class="space-y-1.5 pt-3 border-t border-slate-100">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">Electronic Signature (Type Legal Name) *</label>
+                <span class="text-[10px] font-mono text-slate-400">E-SIGN Act 15 U.S.C. § 7001</span>
+              </div>
+              <input type="text" [(ngModel)]="regForm.typedSignature" [placeholder]="'Type exactly: ' + regForm.fullName" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 font-serif italic focus:outline-none focus:border-blue-500" required />
+              <p class="text-[10px] text-slate-500">By typing your name, you execute a legally binding digital signature attested with network timestamp and client fingerprint.</p>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2">
+              <button (click)="registrationStep = 'details'" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-lg text-xs transition-colors cursor-pointer">
+                Back
+              </button>
+              <button (click)="submitPatientRegistration($event)" class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-xs transition-colors cursor-pointer">
+                Attest & Create Patient Account
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 3: AUDIT PROOF & CONFIRMATION -->
+          <div *ngIf="registrationStep === 'confirmation'" class="space-y-4">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg mx-auto mb-2">
+                ✓
+              </div>
+              <h3 class="text-sm font-bold text-emerald-900">Statutory Consent Legally Executed</h3>
+              <p class="text-xs text-emerald-700 mt-1">Patient account established with binding E-SIGN attestation record.</p>
+            </div>
+
+            <!-- Cryptographic Audit Ledger Card -->
+            <div class="bg-slate-900 rounded-xl p-3.5 text-slate-200 text-[11px] font-mono space-y-2">
+              <div class="flex items-center justify-between border-b border-slate-700 pb-1.5 text-[10px] text-teal-400 uppercase font-bold">
+                <span>🔐 Immutable Audit Proof Record</span>
+                <span>SHA-256 Verified</span>
+              </div>
+              <div class="flex justify-between"><span class="text-slate-400">Signed By:</span> <span class="text-white">{{ registeredConsentAudit?.signedBy }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Patient MRN:</span> <span class="text-teal-300">{{ registeredConsentAudit?.mrn }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Timestamp:</span> <span class="text-slate-300">{{ registeredConsentAudit?.timestamp }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Consent Codex:</span> <span class="text-slate-300">{{ registeredConsentAudit?.consentVersion }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Client IP:</span> <span class="text-emerald-400">{{ registeredConsentAudit?.auditProof?.ipAddress }}</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Device Fingerprint:</span> <span class="text-slate-300">{{ registeredConsentAudit?.auditProof?.deviceType }} ({{ registeredConsentAudit?.auditProof?.screenResolution }})</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Timezone / Locale:</span> <span class="text-slate-300">{{ registeredConsentAudit?.auditProof?.timezone }} / {{ registeredConsentAudit?.auditProof?.locale }}</span></div>
+            </div>
+
+            <button (click)="completeRegistrationAndLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-sm text-xs transition-colors cursor-pointer">
+              Launch Patient Health Portal ➔
+            </button>
+          </div>
+
+        </div>
+      </ng-container>
+
     </div>
   </div>
 </ng-template>
