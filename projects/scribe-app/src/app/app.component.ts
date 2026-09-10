@@ -1869,6 +1869,44 @@ export class AppComponent {
 
   private simulationInterval: any = null;
 
+  serverFhirPayload: string = '';
+  isLoadingFhir: boolean = false;
+
+  async fetchLiveFhirBundle() {
+    this.isLoadingFhir = true;
+    this.isFhirModalOpen = true;
+    try {
+      const res = await fetch('https://aihm-fhir-backend.onrender.com/format-bundle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: this.activeEncounter.id || '00000000-0000-0000-0000-000000000000',
+          practitionerId: 'PRAC-001',
+          soapNote: {
+            subjective: this.soapNote.subjective,
+            objective: this.soapNote.objective,
+            assessment: this.soapNote.assessment,
+            plan: this.soapNote.plan
+          },
+          patientContext: {
+            name: this.activeEncounter.patient.fullName,
+            age: this.activeEncounter.patient.age,
+            sex: this.activeEncounter.patient.gender,
+            mrn: this.activeEncounter.patient.mrn
+          }
+        })
+      });
+      if (!res.ok) throw new Error('FHIR service returned ' + res.status);
+      const data = await res.json();
+      this.serverFhirPayload = JSON.stringify(data.bundle || data, null, 2);
+    } catch (e) {
+      console.warn('FHIR server unavailable or waking up, using client-side bundle fallback', e);
+      this.serverFhirPayload = this.fhirPayload;
+    } finally {
+      this.isLoadingFhir = false;
+    }
+  }
+
   get fhirPayload(): string {
     const fhirDoc = {
       resourceType: "DocumentReference",
@@ -2124,7 +2162,7 @@ export class AppComponent {
         .join('\n');
 
       // Call gemini-service directly for real AI SOAP generation (bypasses slow queue for demo)
-      const response = await fetch('http://localhost:4002/generate-soap', {
+      const response = await fetch('https://aihm-gemini-backend.onrender.com/generate-soap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -2192,7 +2230,7 @@ export class AppComponent {
           if (error) console.error("Supabase Save Error:", error);
 
           try {
-            fetch('http://localhost:4001/scribe/pharmacy/alert', {
+            fetch('https://aihm-backend.onrender.com/scribe/pharmacy/alert', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
