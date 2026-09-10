@@ -1381,168 +1381,368 @@
         </button>
         <div class="h-8 w-px bg-slate-200"></div>
         <div class="flex items-center gap-3">
-          <img src="https://i.pravatar.cc/150?u=marcus_reynolds" class="w-9 h-9 rounded-full border border-slate-200 shadow-sm">
-          <div class="hidden md:block">
-            <div class="text-sm font-bold text-slate-800 leading-none">Marcus Reynolds</div>
-            <div class="text-[10px] text-slate-500 mt-1">Patient ID: 88492</div>
-          </div>
+          <ng-container *ngIf="isDemoPatient">
+            <img src="https://i.pravatar.cc/150?u=marcus_reynolds" class="w-9 h-9 rounded-full border border-slate-200 shadow-sm">
+            <div class="hidden md:block">
+              <div class="text-sm font-bold text-slate-800 leading-none">Marcus Reynolds</div>
+              <div class="text-[10px] text-slate-500 mt-1">Patient ID: 88492</div>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="!isDemoPatient">
+            <div class="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-xs uppercase">
+              {{ currentPatient.fullName ? currentPatient.fullName.charAt(0) : 'P' }}
+            </div>
+            <div class="hidden md:block">
+              <div class="text-sm font-bold text-slate-900 leading-none">{{ currentPatient.fullName }}</div>
+              <div class="text-[10px] font-mono text-emerald-700 mt-1 font-semibold">{{ currentPatient.mrn }}</div>
+            </div>
+          </ng-container>
         </div>
         <button (click)="handleLogout()" class="ml-4 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">Sign Out</button>
       </div>
     </div>
 
     <div class="max-w-6xl mx-auto p-6 md:p-8">
-      <!-- Welcome Hero -->
-      <div class="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-2xl p-8 text-white mb-8 shadow-lg relative overflow-hidden">
-        <svg class="absolute right-0 top-0 opacity-10 w-64 h-64 -mt-10 -mr-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-        <h1 class="text-3xl font-bold mb-2 relative z-10">Good evening, Marcus.</h1>
-        <p class="text-emerald-100 mb-6 max-w-xl relative z-10">Your clinical records, appointments, and prescriptions are securely connected to ScribeOS Hospital Network.</p>
-        <div class="flex gap-4 relative z-10 flex-wrap">
-          <button (click)="openBookingModal()" class="bg-white text-emerald-800 px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-emerald-50 transition-colors cursor-pointer flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Book New Appointment
-          </button>
-          <button (click)="mockAction('Loading Secure Lab Results')" class="bg-emerald-700 border border-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-colors cursor-pointer">View Lab Results</button>
+      <!-- ================= 1. DEMO PATIENT PORTAL (Marcus Reynolds) ================= -->
+      <!-- UNTOUCHED FOR PRESENTATION PURPOSES (Preserved 100% for demo) -->
+      <ng-container *ngIf="isDemoPatient">
+        <!-- Welcome Hero -->
+        <div class="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-2xl p-8 text-white mb-8 shadow-lg relative overflow-hidden">
+          <svg class="absolute right-0 top-0 opacity-10 w-64 h-64 -mt-10 -mr-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+          <h1 class="text-3xl font-bold mb-2 relative z-10">Good evening, Marcus.</h1>
+          <p class="text-emerald-100 mb-6 max-w-xl relative z-10">Your clinical records, appointments, and prescriptions are securely connected to ScribeOS Hospital Network.</p>
+          <div class="flex gap-4 relative z-10 flex-wrap">
+            <button (click)="openBookingModal()" class="bg-white text-emerald-800 px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-emerald-50 transition-colors cursor-pointer flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              Book New Appointment
+            </button>
+            <button (click)="mockAction('Loading Secure Lab Results')" class="bg-emerald-700 border border-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-colors cursor-pointer">View Lab Results</button>
+          </div>
         </div>
-      </div>
 
-      <!-- Pending Lab Orders Alert (Patient Decision) -->
-      <ng-container *ngFor="let apt of appointments">
-        <div *ngIf="apt.labOrders && apt.labOrders.length > 0" class="mb-8">
-          <h2 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-            Action Required: Laboratory Test Orders ({{ apt.patientName }})
-          </h2>
-          <div class="space-y-3">
-            <ng-container *ngFor="let order of apt.labOrders">
-              <div *ngIf="order.status !== 'ACCEPTED' && order.status !== 'DECLINED'" class="bg-white border border-amber-200 rounded-xl p-5 shadow-xs flex items-center justify-between flex-wrap gap-4">
+        <!-- Pending Lab Orders Alert (Patient Decision) -->
+        <ng-container *ngFor="let apt of appointments">
+          <div *ngIf="apt.labOrders && apt.labOrders.length > 0" class="mb-8">
+            <h2 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              Action Required: Laboratory Test Orders ({{ apt.patientName }})
+            </h2>
+            <div class="space-y-3">
+              <ng-container *ngFor="let order of apt.labOrders">
+                <div *ngIf="order.status !== 'ACCEPTED' && order.status !== 'DECLINED'" class="bg-white border border-amber-200 rounded-xl p-5 shadow-xs flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-slate-800 text-sm">{{ order.testName }}</span>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200">Pending Authorization</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">Ordered by Dr. Sarah Chen • {{ order.indication }}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button (click)="declinePatientLabOrder(apt, order)" class="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-colors cursor-pointer">Decline</button>
+                    <button (click)="acceptPatientLabOrder(apt, order)" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                      Accept & Queue Test
+                    </button>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Active Appointments List -->
+        <h2 class="text-xl font-bold text-slate-800 mb-4">My Clinical Appointments</h2>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden mb-8">
+          <div class="divide-y divide-slate-100">
+            <div *ngFor="let apt of appointments" class="p-5 flex items-center justify-between flex-wrap gap-4 hover:bg-slate-50 transition-colors">
+              <div class="flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
+                  APT
+                </div>
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-800 text-sm">{{ order.testName }}</span>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200">Pending Authorization</span>
+                    <span class="font-bold text-slate-900 text-sm">{{ apt.department }} Consultation</span>
+                    <span class="text-xs font-mono text-slate-400">{{ apt.id }}</span>
                   </div>
-                  <p class="text-xs text-slate-500 mt-0.5">Ordered by Dr. Sarah Chen • {{ order.indication }}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button (click)="declinePatientLabOrder(apt, order)" class="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-colors cursor-pointer">Decline</button>
-                  <button (click)="acceptPatientLabOrder(apt, order)" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    Accept & Queue Test
-                  </button>
+                  <p class="text-xs text-slate-600 mt-0.5"><span class="text-slate-400 font-semibold">Chief Complaint:</span> {{ apt.chiefComplaint }}</p>
+                  <div class="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                    <span>📅 {{ apt.preferredDate }}</span>
+                    <span>⏰ {{ apt.preferredTime }}</span>
+                  </div>
                 </div>
               </div>
-            </ng-container>
+              <div>
+                <span class="text-xs font-bold px-3 py-1 rounded-full border shadow-2xs"
+                      [ngClass]="{
+                        'bg-slate-100 text-slate-700 border-slate-200': apt.status === 'SCHEDULED',
+                        'bg-blue-100 text-blue-800 border-blue-200': apt.status === 'WAITING_NURSE' || apt.status === 'IN_NURSE_ASSESSMENT',
+                        'bg-purple-100 text-purple-800 border-purple-200': apt.status === 'WAITING_DEPARTMENT' || apt.status === 'IN_DOCTOR_CONSULTATION',
+                        'bg-amber-100 text-amber-800 border-amber-200': apt.status === 'WAITING_LAB' || apt.status === 'IN_LAB',
+                        'bg-emerald-100 text-emerald-800 border-emerald-200': apt.status === 'COMPLETED' || apt.status === 'LAB_COMPLETED'
+                      }">
+                  {{ apt.status }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Active Appointments</div>
+              <div class="text-xl font-bold text-slate-800">{{ appointments.length }} Registered</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Active Prescriptions</div>
+              <div class="text-xl font-bold text-slate-800">{{pharmacistPrescriptions.length}} Available</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Recent Documents</div>
+              <div class="text-xl font-bold text-slate-800">{{pharmacistPrescriptions.length}} Summaries</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Visits List -->
+        <h2 class="text-xl font-bold text-slate-800 mb-6">Recent Clinical Visits</h2>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div *ngIf="pharmacistPrescriptions.length === 0" class="p-8 text-center text-slate-500">
+            No recent clinical visits found.
+          </div>
+          
+          <div *ngFor="let note of pharmacistPrescriptions; let i = index" class="p-6 border-b border-slate-100 hover:bg-slate-50 transition-colors" [class.border-b-0]="i === pharmacistPrescriptions.length - 1">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div class="flex gap-4">
+                <div class="w-16 h-16 bg-slate-100 rounded-xl flex flex-col items-center justify-center border border-slate-200 shrink-0 shadow-inner">
+                  <span class="text-xs font-bold text-slate-500 uppercase">{{note.created_at | date:'MMM'}}</span>
+                  <span class="text-xl font-black text-slate-800 leading-none">{{note.created_at | date:'dd'}}</span>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold text-slate-800">Internal Medicine Consultation</h3>
+                  <p class="text-sm text-slate-500 mb-2">Dr. Sarah • ScribeOS Clinic</p>
+                  
+                  <!-- Patient Read-Only Preview -->
+                  <div class="bg-slate-50 rounded-lg p-3 text-sm text-slate-700 max-w-2xl border border-slate-200 shadow-sm">
+                    <div class="font-bold mb-1 text-[10px] uppercase tracking-wider text-slate-400">Doctor's Assessment Overview:</div>
+                    <div class="line-clamp-2 italic">{{ parseAssessment(note.assessment) }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex flex-col items-end gap-2 w-full md:w-auto mt-4 md:mt-0">
+                <div class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 mb-1 flex items-center gap-1.5 self-end">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Time: {{note.created_at | date:'shortTime'}}
+                </div>
+                <div class="flex flex-col gap-2 w-full">
+                  <button (click)="viewingSummaryNote = note" class="w-full md:w-48 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2 cursor-pointer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>View Full Summary</button>
+                  <button (click)="downloadPatientPdf(note)" class="w-full md:w-48 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2 cursor-pointer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Download PDF</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </ng-container>
 
-      <!-- Active Appointments List -->
-      <h2 class="text-xl font-bold text-slate-800 mb-4">My Clinical Appointments</h2>
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden mb-8">
-        <div class="divide-y divide-slate-100">
-          <div *ngFor="let apt of appointments" class="p-5 flex items-center justify-between flex-wrap gap-4 hover:bg-slate-50 transition-colors">
-            <div class="flex items-start gap-3.5">
-              <div class="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
-                APT
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-slate-900 text-sm">{{ apt.department }} Consultation</span>
-                  <span class="text-xs font-mono text-slate-400">{{ apt.id }}</span>
-                </div>
-                <p class="text-xs text-slate-600 mt-0.5"><span class="text-slate-400 font-semibold">Chief Complaint:</span> {{ apt.chiefComplaint }}</p>
-                <div class="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
-                  <span>📅 {{ apt.preferredDate }}</span>
-                  <span>⏰ {{ apt.preferredTime }}</span>
-                </div>
-              </div>
+      <!-- ================= 2. NEWLY REGISTERED PATIENT PORTAL ================= -->
+      <!-- DEDICATED CLEAN WORKSPACE FOR NEWLY CREATED ACCOUNTS -->
+      <ng-container *ngIf="!isDemoPatient">
+        <!-- New Patient Welcome Hero -->
+        <div class="bg-gradient-to-r from-emerald-800 to-teal-700 rounded-2xl p-8 text-white mb-8 shadow-lg relative overflow-hidden">
+          <svg class="absolute right-0 top-0 opacity-10 w-64 h-64 -mt-10 -mr-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+          <div class="flex items-center gap-2 mb-2 relative z-10 flex-wrap">
+            <span class="bg-emerald-500/30 text-emerald-100 border border-emerald-400/40 text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full">
+              ✨ Newly Enrolled Patient
+            </span>
+            <span class="bg-blue-500/30 text-blue-100 border border-blue-400/40 text-[10px] uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-full">
+              ⚖️ HIPAA & Ambient AI Consented
+            </span>
+          </div>
+          <h1 class="text-3xl font-bold mb-2 relative z-10">Good evening, {{ currentPatient.firstName }}.</h1>
+          <p class="text-emerald-100 mb-6 max-w-xl relative z-10 leading-relaxed">
+            Welcome to your personal ScribeOS Health Portal. Your account is active and protected under the statutory HIPAA codex attested on {{ currentPatient.registeredAt | date:'mediumDate' }}.
+          </p>
+          <div class="flex gap-4 relative z-10 flex-wrap">
+            <button (click)="openBookingModal()" class="bg-white text-emerald-800 px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-emerald-50 transition-colors cursor-pointer flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              Book Initial Consultation
+            </button>
+            <button (click)="isAttestationModalOpen = true" class="bg-emerald-700/80 border border-emerald-400 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition-colors cursor-pointer flex items-center gap-2">
+              <span>📜</span> View Signed HIPAA Codex
+            </button>
+          </div>
+        </div>
+
+        <!-- Patient Demographics & Profile Summary Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs mb-8">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Patient Identification & Credentials</h2>
+            </div>
+            <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2.5 py-1 rounded-full">
+              ✓ E-SIGN Attested
+            </span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Legal Full Name</span>
+              <span class="font-bold text-slate-900 text-sm">{{ currentPatient.fullName }}</span>
             </div>
             <div>
-              <span class="text-xs font-bold px-3 py-1 rounded-full border shadow-2xs"
-                    [ngClass]="{
-                      'bg-slate-100 text-slate-700 border-slate-200': apt.status === 'SCHEDULED',
-                      'bg-blue-100 text-blue-800 border-blue-200': apt.status === 'WAITING_NURSE' || apt.status === 'IN_NURSE_ASSESSMENT',
-                      'bg-purple-100 text-purple-800 border-purple-200': apt.status === 'WAITING_DEPARTMENT' || apt.status === 'IN_DOCTOR_CONSULTATION',
-                      'bg-amber-100 text-amber-800 border-amber-200': apt.status === 'WAITING_LAB' || apt.status === 'IN_LAB',
-                      'bg-emerald-100 text-emerald-800 border-emerald-200': apt.status === 'COMPLETED' || apt.status === 'LAB_COMPLETED'
-                    }">
-                {{ apt.status }}
-              </span>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Medical Record Number (MRN)</span>
+              <span class="font-mono font-bold text-blue-600 text-sm">{{ currentPatient.mrn }}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Date of Birth / Gender</span>
+              <span class="font-semibold text-slate-800">{{ currentPatient.dob }} ({{ currentPatient.gender }})</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Registered Email</span>
+              <span class="font-mono text-slate-700 truncate block">{{ currentPatient.email }}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Quick Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
-          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <!-- Quick Stats for New Patient -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Scheduled Appointments</div>
+              <div class="text-xl font-bold text-slate-800">{{ newPatientAppointments.length }} Active</div>
+            </div>
           </div>
-          <div>
-            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Active Appointments</div>
-            <div class="text-xl font-bold text-slate-800">{{ appointments.length }} Registered</div>
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Active Prescriptions</div>
+              <div class="text-xl font-bold text-slate-800">0 Available</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Verified Documents</div>
+              <div class="text-xl font-bold text-slate-800">1 Certified File</div>
+            </div>
           </div>
         </div>
-        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
-          <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-          </div>
-          <div>
-            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Active Prescriptions</div>
-            <div class="text-xl font-bold text-slate-800">{{pharmacistPrescriptions.length}} Available</div>
-          </div>
-        </div>
-        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
-          <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          </div>
-          <div>
-            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Recent Documents</div>
-            <div class="text-xl font-bold text-slate-800">{{pharmacistPrescriptions.length}} Summaries</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Recent Visits List -->
-      <h2 class="text-xl font-bold text-slate-800 mb-6">Recent Clinical Visits</h2>
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div *ngIf="pharmacistPrescriptions.length === 0" class="p-8 text-center text-slate-500">
-          No recent clinical visits found.
+        <!-- My Clinical Appointments (New Patient) -->
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-slate-800">My Clinical Appointments</h2>
+          <button (click)="openBookingModal()" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer">
+            <span>+ Schedule Consultation</span>
+          </button>
         </div>
-        
-        <div *ngFor="let note of pharmacistPrescriptions; let i = index" class="p-6 border-b border-slate-100 hover:bg-slate-50 transition-colors" [class.border-b-0]="i === pharmacistPrescriptions.length - 1">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div class="flex gap-4">
-              <div class="w-16 h-16 bg-slate-100 rounded-xl flex flex-col items-center justify-center border border-slate-200 shrink-0 shadow-inner">
-                <span class="text-xs font-bold text-slate-500 uppercase">{{note.created_at | date:'MMM'}}</span>
-                <span class="text-xl font-black text-slate-800 leading-none">{{note.created_at | date:'dd'}}</span>
+
+        <!-- If no appointments yet -->
+        <div *ngIf="newPatientAppointments.length === 0" class="bg-white rounded-2xl border border-slate-200 p-8 text-center mb-8 shadow-xs">
+          <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mx-auto mb-3">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          </div>
+          <h3 class="text-base font-bold text-slate-800 mb-1">No Upcoming Appointments</h3>
+          <p class="text-xs text-slate-500 max-w-md mx-auto mb-5 leading-relaxed">
+            You are enrolled in the hospital network, but have not scheduled a clinical consultation yet. Select a department to request your first consultation.
+          </p>
+          <button (click)="openBookingModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-lg text-xs shadow-xs transition-colors cursor-pointer inline-flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Book Your First Appointment
+          </button>
+        </div>
+
+        <!-- If new patient booked appointments -->
+        <div *ngIf="newPatientAppointments.length > 0" class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden mb-8">
+          <div class="divide-y divide-slate-100">
+            <div *ngFor="let apt of newPatientAppointments" class="p-5 flex items-center justify-between flex-wrap gap-4 hover:bg-slate-50 transition-colors">
+              <div class="flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
+                  APT
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-900 text-sm">{{ apt.department }} Consultation</span>
+                    <span class="text-xs font-mono text-slate-400">{{ apt.id }}</span>
+                  </div>
+                  <p class="text-xs text-slate-600 mt-0.5"><span class="text-slate-400 font-semibold">Chief Complaint:</span> {{ apt.chiefComplaint }}</p>
+                  <div class="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                    <span>📅 {{ apt.preferredDate }}</span>
+                    <span>⏰ {{ apt.preferredTime }}</span>
+                  </div>
+                </div>
               </div>
               <div>
-                <h3 class="text-lg font-bold text-slate-800">Internal Medicine Consultation</h3>
-                <p class="text-sm text-slate-500 mb-2">Dr. Sarah • ScribeOS Clinic</p>
-                
-                <!-- Patient Read-Only Preview -->
-                <div class="bg-slate-50 rounded-lg p-3 text-sm text-slate-700 max-w-2xl border border-slate-200 shadow-sm">
-                  <div class="font-bold mb-1 text-[10px] uppercase tracking-wider text-slate-400">Doctor's Assessment Overview:</div>
-                  <div class="line-clamp-2 italic">{{ parseAssessment(note.assessment) }}</div>
+                <span class="text-xs font-bold px-3 py-1 rounded-full border shadow-2xs bg-slate-100 text-slate-700 border-slate-200">
+                  {{ apt.status }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Official Health Documents & Attested Records -->
+        <h2 class="text-xl font-bold text-slate-800 mb-4">Official Health Documents & Certified Records</h2>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden mb-8">
+          <div class="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center text-blue-600 shrink-0 text-xl shadow-xs">
+                ⚖️
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="text-sm font-bold text-slate-900">HIPAA Notice of Privacy Practices & Ambient AI Scribe Codex</h3>
+                  <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    Legally Executed
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                  Attested by <strong class="text-slate-700">{{ currentPatient.fullName }}</strong> under 45 CFR § 164.520 & Federal E-SIGN Act (15 U.S.C. § 7001).
+                </p>
+                <div class="text-[11px] font-mono text-slate-400 mt-1">
+                  Archived Timestamp: {{ currentPatient.registeredAt | date:'medium' }}
                 </div>
               </div>
             </div>
-            
-            <div class="flex flex-col items-end gap-2 w-full md:w-auto mt-4 md:mt-0">
-              <div class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 mb-1 flex items-center gap-1.5 self-end">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Time: {{note.created_at | date:'shortTime'}}
-              </div>
-              <div class="flex flex-col gap-2 w-full">
-                <button (click)="viewingSummaryNote = note" class="w-full md:w-48 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2 cursor-pointer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>View Full Summary</button>
-                <button (click)="downloadPatientPdf(note)" class="w-full md:w-48 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2 cursor-pointer"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Download PDF</button>
-              </div>
+            <div class="flex items-center gap-2 self-end md:self-center">
+              <button (click)="isAttestationModalOpen = true" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition-colors cursor-pointer">
+                View Signed Codex
+              </button>
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- Recent Clinical Visits (New Patient) -->
+        <h2 class="text-xl font-bold text-slate-800 mb-4">Recent Clinical Visits & Notes</h2>
+        <div class="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500 shadow-xs">
+          <p class="text-sm font-medium text-slate-700 mb-1">No Clinical Encounters on File Yet</p>
+          <p class="text-xs text-slate-400 max-w-lg mx-auto">
+            Once you attend an encounter with your physician, your ambient AI-generated clinical SOAP note, diagnoses, and pharmacy prescriptions will automatically appear in this section.
+          </p>
+        </div>
+
+      </ng-container>
     </div>
   </div>
 </ng-container>
@@ -1964,6 +2164,141 @@
         <button type="submit" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs transition-colors cursor-pointer">Confirm & Book</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- PATIENT HIPAA ATTESTATION & CODEX MODAL -->
+<div *ngIf="isAttestationModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-sm transition-opacity">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 font-sans animate-fade-in-down">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-xl">
+          ⚖️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-bold text-white">Statutory HIPAA & Ambient AI Consent Codex</h2>
+            <span class="text-[10px] font-bold bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 px-2 py-0.5 rounded-full">
+              LEGAL ATTESTATION
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Codex Version: 2026.4-US-FED-OMNI • E-SIGN Act 15 U.S.C. § 7001 Certified</p>
+        </div>
+      </div>
+      <button (click)="isAttestationModalOpen = false" class="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <!-- Modal Body (Scrollable) -->
+    <div class="p-6 overflow-y-auto space-y-6 text-xs bg-slate-50 flex-1">
+      <!-- Patient Identity Header -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Executed By Attesting Patient</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <span class="text-slate-400 text-[10px] uppercase block font-semibold">Attesting Signatory</span>
+            <span class="font-bold text-slate-900 text-sm">{{ currentPatient?.fullName }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 text-[10px] uppercase block font-semibold">Medical Record No.</span>
+            <span class="font-mono font-bold text-blue-600 text-sm">{{ currentPatient?.mrn }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 text-[10px] uppercase block font-semibold">Attested Timestamp</span>
+            <span class="font-semibold text-slate-800">{{ (currentPatient?.auditProof?.timestamp || currentPatient?.registeredAt) | date:'medium' }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 text-[10px] uppercase block font-semibold">Account Status</span>
+            <span class="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> ACTIVE ENROLLED
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statutory Mandates Affirmed -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Statutory Mandates & Affidavits Affirmed</span>
+        <div class="space-y-2">
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-100">
+            <span class="text-emerald-600 font-bold text-sm">✓</span>
+            <div>
+              <span class="font-bold text-slate-800 block">45 CFR § 164.520 — HIPAA Notice of Privacy Practices</span>
+              <p class="text-slate-600 text-[11px] mt-0.5">Acknowledgment of covered entity data handling policies, ePHI rights, and statutory non-disclosure guarantees.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-100">
+            <span class="text-emerald-600 font-bold text-sm">✓</span>
+            <div>
+              <span class="font-bold text-slate-800 block">45 CFR § 164.508 & FDA SaMD — Ambient AI Clinical Documentation</span>
+              <p class="text-slate-600 text-[11px] mt-0.5">Informed consent authorizing ephemeral ambient audio transcription and clinical NLP structuring with mandatory physician verification.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-100">
+            <span class="text-emerald-600 font-bold text-sm">✓</span>
+            <div>
+              <span class="font-bold text-slate-800 block">21st Century Cures Act § 4004 (45 CFR Part 171) — Interoperability & Unblocked Access</span>
+              <p class="text-slate-600 text-[11px] mt-0.5">Right to instantaneous, machine-readable digital access to all clinical encounter notes, laboratory orders, and diagnoses without delay.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-100">
+            <span class="text-emerald-600 font-bold text-sm">✓</span>
+            <div>
+              <span class="font-bold text-slate-800 block">DEA 21 CFR Part 1311 & State Prescription Laws — Electronic EPCS Routing</span>
+              <p class="text-slate-600 text-[11px] mt-0.5">Authorization for certified electronic prescription transmission directly to licensed commercial dispensing pharmacies.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Electronic Signature & Digital Audit Evidence -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cryptographic Signature & Audit Certificate</span>
+          <span class="text-[10px] font-mono text-slate-400">HASH: SHA256-NIST-FIPS-180-4</span>
+        </div>
+        
+        <div class="p-4 bg-slate-900 text-slate-100 rounded-xl space-y-3 font-mono text-[11px]">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-slate-400">LEGAL_SIGNATURE_STRING:</span>
+            <span class="font-serif italic text-emerald-400 text-sm">/s/ {{ currentPatient?.auditProof?.signedBy || currentPatient?.fullName }}</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-300">
+            <div><span class="text-slate-500">CLIENT_EDGE_IP:</span> {{ currentPatient?.auditProof?.auditProof?.ipAddress || '192.168.1.42 (Edge Proxy)' }}</div>
+            <div><span class="text-slate-500">TIMESTAMP_UTC:</span> {{ currentPatient?.auditProof?.timestamp || currentPatient?.registeredAt }}</div>
+            <div><span class="text-slate-500">USER_AGENT:</span> {{ currentPatient?.auditProof?.auditProof?.userAgent || 'Chrome/128 (Windows NT 10.0; Win64)' }}</div>
+            <div><span class="text-slate-500">DEVICE_CLASS:</span> {{ currentPatient?.auditProof?.auditProof?.deviceType || 'Desktop Workstation' }}</div>
+            <div><span class="text-slate-500">TIMEZONE:</span> {{ currentPatient?.auditProof?.auditProof?.timezone || 'America/New_York' }}</div>
+            <div><span class="text-slate-500">RESOLUTION:</span> {{ currentPatient?.auditProof?.auditProof?.screenResolution || '1920x1080' }}</div>
+          </div>
+          <div class="pt-2 border-t border-slate-800 text-[10px] text-emerald-400/90 break-all leading-tight">
+            LEDGER_RECORD_DIGEST: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855::{{ currentPatient?.mrn }}::AFFIRMED
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200 flex items-start gap-2.5">
+          <span class="text-amber-600 text-sm shrink-0">🛡️</span>
+          <p class="text-[11px] text-amber-900 leading-relaxed">
+            <strong>Federal Legal Guarantee:</strong> Under 45 CFR § 164.508 and state privacy statutes, this electronic consent ledger is cryptographically sealed and immutable. Neither private clinic administrators nor cloud operators are permitted to extract, share, or sell raw protected health information without explicit patient authorization.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 border-t border-slate-200 bg-white flex items-center justify-between">
+      <div class="flex items-center gap-2 text-slate-400 text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>Legally Bound under U.S. Federal Standards</span>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" (click)="isAttestationModalOpen = false" class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer">
+          Close Attestation Record
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 

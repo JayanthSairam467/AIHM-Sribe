@@ -158,6 +158,22 @@ export class AppComponent {
   registeredConsentAudit: any = null;
   registrationError = '';
 
+  // Patient Portal State: Demo (Marcus) vs Dedicated New Patient
+  isDemoPatient: boolean = true;
+  isAttestationModalOpen: boolean = false;
+  currentPatient: any = {
+    fullName: 'Marcus Reynolds',
+    firstName: 'Marcus',
+    mrn: '88492',
+    email: 'patient@scribe.ai',
+    dob: '1984-04-12',
+    gender: 'Male',
+    registeredAt: '2026-09-01T08:00:00Z',
+    isNew: false
+  };
+  registeredPatientAccounts: any[] = [];
+  newPatientAppointments: any[] = [];
+
   // Doctor workspace view: 'landing' shows queue, 'workspace' shows consultation
   doctorView: 'landing' | 'workspace' = 'landing';
 
@@ -288,10 +304,10 @@ export class AppComponent {
     const newId = `APT-2026-000${this.appointments.length + 124}`;
     const newApt = {
       id: newId,
-      patientName: 'Marcus Reynolds',
-      mrn: 'MRN-8849201',
-      age: 42,
-      gender: 'M',
+      patientName: this.isDemoPatient ? 'Marcus Reynolds' : this.currentPatient.fullName,
+      mrn: this.isDemoPatient ? 'MRN-8849201' : this.currentPatient.mrn,
+      age: this.isDemoPatient ? 42 : 30,
+      gender: this.isDemoPatient ? 'M' : (this.currentPatient.gender === 'Female' ? 'F' : 'M'),
       department: this.bookingForm.department,
       chiefComplaint: this.bookingForm.chiefComplaint,
       preferredDate: this.bookingForm.preferredDate,
@@ -305,6 +321,9 @@ export class AppComponent {
       caseSheet: null
     };
     this.appointments.unshift(newApt);
+    if (!this.isDemoPatient) {
+      this.newPatientAppointments.unshift(newApt);
+    }
     this.isBookingModalOpen = false;
     this.bookingForm.chiefComplaint = '';
     this.bookingForm.notes = '';
@@ -1836,7 +1855,26 @@ export class AppComponent {
 
   handleLogin(e: Event) {
     e.preventDefault();
-    const email = this.loginEmail.toLowerCase();
+    const email = this.loginEmail.toLowerCase().trim();
+
+    // 1. Check if it matches a newly registered patient
+    const registered = this.registeredPatientAccounts.find(p => p.email.toLowerCase() === email);
+    if (registered) {
+      if (registered.password && registered.password !== this.loginPassword) {
+        this.loginError = true;
+        return;
+      }
+      this.isLoggedIn = true;
+      this.loginError = false;
+      this.loginRole = 'Patient';
+      this.authenticatedRole = 'Patient';
+      this.isAdminSession = false;
+      this.isDemoPatient = false;
+      this.currentPatient = registered;
+      this.showToast('Welcome back to your health portal, ' + registered.fullName + '!', 'success');
+      return;
+    }
+
     if (email === 'dr.sarah@scribe.ai' || email === 'admin@scribe.ai' || email === 'nurse@scribe.ai' || email === 'pharmacist@scribe.ai' || email === 'patient@scribe.ai' || email === 'reception@scribe.ai' || email === 'lab@scribe.ai') {
       this.isLoggedIn = true;
       this.loginError = false;
@@ -1866,6 +1904,17 @@ export class AppComponent {
         this.loginRole = 'Patient';
         this.authenticatedRole = 'Patient';
         this.isAdminSession = false;
+        this.isDemoPatient = true; // DEMO PRESENTATION PATIENT (Marcus Reynolds)
+        this.currentPatient = {
+          fullName: 'Marcus Reynolds',
+          firstName: 'Marcus',
+          mrn: '88492',
+          email: 'patient@scribe.ai',
+          dob: '1984-04-12',
+          gender: 'Male',
+          registeredAt: '2026-09-01T08:00:00Z',
+          isNew: false
+        };
         this.loadPharmacistData();
       } else {
         this.loginRole = 'Doctor';
@@ -1895,6 +1944,7 @@ export class AppComponent {
     this.authTab = 'staff';
     this.patientSubMode = 'login';
     this.registrationStep = 'details';
+    this.isDemoPatient = true;
   }
 
   // ===== Patient & Staff Tab Switching =====
@@ -2029,8 +2079,35 @@ export class AppComponent {
     this.authTab = 'patient';
     this.patientSubMode = 'login';
     this.registrationStep = 'details';
-    this.loadPharmacistData();
-    this.showToast('Welcome to your secure patient portal, ' + this.regForm.fullName + '!', 'success');
+
+    // Establish Dedicated New Patient Session
+    this.isDemoPatient = false;
+    const nameParts = (this.regForm.fullName || 'Patient').trim().split(' ');
+    const firstName = nameParts[0];
+
+    const newPatientProfile = {
+      fullName: this.regForm.fullName,
+      firstName: firstName,
+      mrn: this.regForm.mrn,
+      email: this.regForm.email,
+      password: this.regForm.password,
+      dob: this.regForm.dob,
+      gender: this.regForm.gender,
+      registeredAt: new Date().toISOString(),
+      isNew: true,
+      auditProof: this.registeredConsentAudit
+    };
+
+    this.currentPatient = newPatientProfile;
+
+    const existingIdx = this.registeredPatientAccounts.findIndex(p => p.email.toLowerCase() === this.regForm.email.toLowerCase());
+    if (existingIdx >= 0) {
+      this.registeredPatientAccounts[existingIdx] = newPatientProfile;
+    } else {
+      this.registeredPatientAccounts.unshift(newPatientProfile);
+    }
+
+    this.showToast('Welcome to your new personal health portal, ' + this.regForm.fullName + '!', 'success');
   }
 
   private simulationInterval: any = null;
