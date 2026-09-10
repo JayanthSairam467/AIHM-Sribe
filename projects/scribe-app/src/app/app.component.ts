@@ -131,8 +131,9 @@ export class AppComponent {
   loginRole: string = 'Doctor';
   get roleStr(): string { return this.loginRole; }
 
-  // Patient Registration & Consent State (HIPAA / Cures Act / E-SIGN)
-  authMode: 'login' | 'register' = 'login';
+  // Patient & Staff Authentication & Registration State (HIPAA / Cures Act / E-SIGN)
+  authTab: 'staff' | 'patient' = 'staff';
+  patientSubMode: 'login' | 'register' = 'login';
   registrationStep: 'details' | 'consent' | 'confirmation' = 'details';
   isTermsModalOpen = false;
   termsScrolledToBottom = false;
@@ -1891,13 +1892,29 @@ export class AppComponent {
     this.pharmacistView = 'queue';
     this.viewingChartNote = null;
     this.viewingSummaryNote = null;
-    this.authMode = 'login';
+    this.authTab = 'staff';
+    this.patientSubMode = 'login';
     this.registrationStep = 'details';
+  }
+
+  // ===== Patient & Staff Tab Switching =====
+  switchAuthTab(tab: 'staff' | 'patient') {
+    this.authTab = tab;
+    this.loginError = false;
+    if (tab === 'staff') {
+      this.loginEmail = 'dr.sarah@scribe.ai';
+      this.loginPassword = 'password123';
+    } else {
+      this.loginEmail = 'patient@scribe.ai';
+      this.loginPassword = 'password123';
+      this.patientSubMode = 'login';
+    }
   }
 
   // ===== Patient Registration & Consent Audit Methods =====
   openPatientRegistration() {
-    this.authMode = 'register';
+    this.authTab = 'patient';
+    this.patientSubMode = 'register';
     this.registrationStep = 'details';
     this.registrationError = '';
     this.regForm = {
@@ -2004,7 +2021,8 @@ export class AppComponent {
     this.loginRole = 'Patient';
     this.authenticatedRole = 'Patient';
     this.isAdminSession = false;
-    this.authMode = 'login';
+    this.authTab = 'patient';
+    this.patientSubMode = 'login';
     this.registrationStep = 'details';
     this.loadPharmacistData();
     this.showToast('Welcome to your secure patient portal, ' + this.regForm.fullName + '!', 'success');
