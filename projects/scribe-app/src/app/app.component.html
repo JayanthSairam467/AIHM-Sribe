@@ -2818,7 +2818,7 @@
         <ng-container *ngIf="patientSubMode === 'login'">
           <form class="w-full space-y-4" (submit)="handleLogin($event)">
             <div *ngIf="loginError" class="bg-rose-50 border border-rose-200 text-rose-700 font-medium text-xs p-3 rounded-md mb-4 text-center">
-              Patient record not found. Try one-click demo login below or register.
+              {{ loginErrorMessage || 'Patient record not found. Try one-click demo login below or register.' }}
             </div>
 
             <div class="space-y-1.5">
