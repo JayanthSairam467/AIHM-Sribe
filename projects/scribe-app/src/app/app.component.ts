@@ -4,7 +4,7 @@ import { firstValueFrom, timeout } from 'rxjs';
 import { SessionsService, TasksService, MessagesService, RecordsService } from 'api-client';
 import { FormsModule } from '@angular/forms';
 import { CLINICAL_ENCOUNTERS } from './data/mock-encounters';
-import { ClinicalEncounter, SoapNote, MedicalEntity, TranscriptUtterance } from './types';
+import { ClinicalEncounter, SoapNote, MedicalEntity, TranscriptUtterance, HistoricalReport, PatientHistoryRecord } from './types';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient('https://ayzilsmrademvwdpqqhd.supabase.co', 'sb_publishable_VOM5JzguqWPVHxoYcNXOJQ_uy7IZi1s');
@@ -70,22 +70,48 @@ export class AppComponent {
     }, 4000);
   }
 
-  encounters = CLINICAL_ENCOUNTERS;
+  encounters: ClinicalEncounter[] = JSON.parse(JSON.stringify(CLINICAL_ENCOUNTERS));
   currentEncounterId = CLINICAL_ENCOUNTERS[0].id;
 
   get activeEncounter(): ClinicalEncounter {
     return this.encounters.find(e => e.id === this.currentEncounterId) || this.encounters[0];
   }
 
-  soapNote: SoapNote = { ...CLINICAL_ENCOUNTERS[0].soap };
-  entities: MedicalEntity[] = [...CLINICAL_ENCOUNTERS[0].entities];
+  soapNote: SoapNote = {
+    subjective: {
+      chiefComplaint: '',
+      historyOfPresentIllness: '',
+      reviewOfSystems: '',
+      currentMedications: '',
+      allergies: 'No known drug allergies (NKDA)',
+    },
+    objective: {
+      vitals: '',
+      physicalExam: '',
+      diagnosticResults: '',
+    },
+    assessment: {
+      primaryDiagnosis: '',
+      differentialDiagnoses: [],
+      clinicalImpression: '',
+    },
+    plan: {
+      diagnostics: '',
+      medicationsAndRx: '',
+      patientEducation: '',
+      followUp: '',
+    },
+    lastUpdated: 'Just now',
+    isSigned: false,
+  };
+  entities: MedicalEntity[] = [];
   selectedEntityId: string | null = null;
 
   captureMode: 'simulation' | 'microphone' | 'upload' = 'simulation';
   isRecording = false;
   isSimulating = false;
-  timerSeconds = 142;
-  visibleUtteranceCount = CLINICAL_ENCOUNTERS[0].utterances.length;
+  timerSeconds = 0;
+  visibleUtteranceCount = 0;
   isGenerating = false;
 
   leftRailTab: 'transcript' | 'entities' = 'transcript';
@@ -97,10 +123,1337 @@ export class AppComponent {
 
   // Authentication State
   isLoggedIn = false;
+  isAdminSession = false;
+  authenticatedRole: string = 'Doctor';
   loginEmail = 'dr.sarah@scribe.ai';
   loginPassword = 'password123';
   loginError = false;
-  loginRole = 'Doctor';
+  loginRole: string = 'Doctor';
+  get roleStr(): string { return this.loginRole; }
+
+  // Doctor workspace view: 'landing' shows queue, 'workspace' shows consultation
+  doctorView: 'landing' | 'workspace' = 'landing';
+
+  // Available clinical departments
+  departments: string[] = [
+    'Cardiology',
+    'Neurology',
+    'General Medicine',
+    'ENT',
+    'Orthopedics',
+    'Pediatrics',
+    'Dermatology'
+  ];
+
+  // Master Appointments List (Workflow State)
+  appointments: any[] = [
+    {
+      id: 'APT-2026-000123',
+      patientName: 'Robert H. Vance',
+      mrn: 'MRN-5847619',
+      age: 62,
+      gender: 'M',
+      department: 'Cardiology',
+      chiefComplaint: 'Exertional chest tightness and mild dyspnea × 2–3 weeks',
+      preferredDate: '2026-09-10',
+      preferredTime: '09:00 AM',
+      severity: 'HIGH_PRIORITY',
+      status: 'WAITING_DEPARTMENT',
+      waitingMins: 38,
+      nurseNotes: 'BP elevated on triage. SpO2 95%. Reports shortness of breath on exertion.',
+      vitals: { bp: '142/88', hr: 102, spo2: 95, temp: 38.4, rr: 21, height: 178, weight: 84, pain: 4, glucose: 135 },
+      labOrders: [],
+      caseSheet: null
+    },
+    {
+      id: 'APT-2026-000124',
+      patientName: 'Amelia S. Torres',
+      mrn: 'MRN-3921047',
+      age: 45,
+      gender: 'F',
+      department: 'Cardiology',
+      chiefComplaint: 'Palpitations and intermittent dizziness for 1 week',
+      preferredDate: '2026-09-10',
+      preferredTime: '09:30 AM',
+      severity: 'URGENT',
+      status: 'WAITING_DEPARTMENT',
+      waitingMins: 21,
+      nurseNotes: 'Irregular pulse noted on triage. Denies chest pain at rest.',
+      vitals: { bp: '128/82', hr: 88, spo2: 98, temp: 36.9, rr: 16, height: 165, weight: 62, pain: 2, glucose: 98 },
+      labOrders: [],
+      caseSheet: null
+    },
+    {
+      id: 'APT-2026-000125',
+      patientName: 'James K. Patel',
+      mrn: 'MRN-7012334',
+      age: 54,
+      gender: 'M',
+      department: 'Cardiology',
+      chiefComplaint: 'Follow-up post-MI — medication review and stress test results',
+      preferredDate: '2026-09-10',
+      preferredTime: '10:00 AM',
+      severity: 'ROUTINE',
+      status: 'WAITING_DEPARTMENT',
+      waitingMins: 12,
+      nurseNotes: 'Stable. On atorvastatin, metoprolol. Denies new symptoms.',
+      vitals: { bp: '118/76', hr: 68, spo2: 99, temp: 36.7, rr: 14, height: 172, weight: 75, pain: 0, glucose: 104 },
+      labOrders: [],
+      caseSheet: null
+    },
+    {
+      id: 'APT-2026-000126',
+      patientName: 'Linda M. Chow',
+      mrn: 'MRN-6634902',
+      age: 71,
+      gender: 'F',
+      department: 'Cardiology',
+      chiefComplaint: 'Bilateral ankle swelling and exertional fatigue — 2 weeks',
+      preferredDate: '2026-09-10',
+      preferredTime: '10:30 AM',
+      severity: 'URGENT',
+      status: 'WAITING_DEPARTMENT',
+      waitingMins: 5,
+      nurseNotes: 'Pitting edema bilaterally. Mild dyspnea on exertion. SpO2 96%.',
+      vitals: { bp: '138/90', hr: 92, spo2: 96, temp: 37.1, rr: 18, height: 160, weight: 68, pain: 3, glucose: 112 },
+      labOrders: [],
+      caseSheet: null
+    },
+    {
+      id: 'APT-2026-000127',
+      patientName: 'Marcus Reynolds',
+      mrn: 'MRN-8849201',
+      age: 42,
+      gender: 'M',
+      department: 'Cardiology',
+      chiefComplaint: 'Substernal chest heaviness during morning jog',
+      preferredDate: '2026-09-10',
+      preferredTime: '11:00 AM',
+      severity: 'URGENT',
+      status: 'SCHEDULED',
+      waitingMins: 0,
+      nurseNotes: '',
+      vitals: null,
+      labOrders: [],
+      caseSheet: null
+    }
+  ];
+
+  // Patient Portal Booking Modal State
+  isBookingModalOpen = false;
+  bookingForm = {
+    chiefComplaint: '',
+    department: 'Cardiology',
+    preferredDate: '2026-09-10',
+    preferredTime: '11:30 AM',
+    notes: ''
+  };
+
+  openBookingModal() {
+    this.isBookingModalOpen = true;
+  }
+
+  submitBooking() {
+    if (!this.bookingForm.chiefComplaint) {
+      this.showToast('Please describe your symptoms/chief complaint', 'error');
+      return;
+    }
+    const newId = `APT-2026-000${this.appointments.length + 124}`;
+    const newApt = {
+      id: newId,
+      patientName: 'Marcus Reynolds',
+      mrn: 'MRN-8849201',
+      age: 42,
+      gender: 'M',
+      department: this.bookingForm.department,
+      chiefComplaint: this.bookingForm.chiefComplaint,
+      preferredDate: this.bookingForm.preferredDate,
+      preferredTime: this.bookingForm.preferredTime,
+      severity: 'ROUTINE',
+      status: 'SCHEDULED',
+      waitingMins: 0,
+      nurseNotes: '',
+      vitals: null,
+      labOrders: [],
+      caseSheet: null
+    };
+    this.appointments.unshift(newApt);
+    this.isBookingModalOpen = false;
+    this.bookingForm.chiefComplaint = '';
+    this.bookingForm.notes = '';
+    this.showToast(`✅ Appointment booked successfully! ID: ${newId}`, 'success');
+  }
+
+  // Patient Lab Order Decision
+  acceptPatientLabOrder(apt: any, order: any) {
+    order.status = 'ACCEPTED';
+    apt.status = 'WAITING_LAB';
+    this.labQueue.unshift({
+      id: `LAB-ORD-${Date.now().toString().slice(-4)}`,
+      appointmentId: apt.id,
+      patientName: apt.patientName,
+      mrn: apt.mrn,
+      age: apt.age,
+      gender: apt.gender,
+      testName: order.testName,
+      priority: order.priority || 'Urgent',
+      indication: order.indication || 'Clinical evaluation',
+      status: 'WAITING_LAB',
+      orderedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      result: null
+    });
+    this.showToast(`Lab order for ${order.testName} accepted. Added to Lab Queue.`, 'success');
+  }
+
+  declinePatientLabOrder(apt: any, order: any) {
+    order.status = 'DECLINED';
+    this.showToast(`Lab test ${order.testName} declined by patient. Recorded in audit ledger.`, 'info');
+  }
+
+  // Master Patient History Database (EHR Records & Previous Reports)
+  patientHistoryDatabase: Record<string, PatientHistoryRecord> = {
+    'MRN-5847619': {
+      mrn: 'MRN-5847619',
+      patientName: 'Robert H. Vance',
+      age: 62,
+      gender: 'M',
+      dob: '1964-04-12',
+      allergies: ['Penicillin (Severe hives/anaphylactoid)', 'Sulfa Drugs (Mild rash)'],
+      currentMeds: 'Metoprolol Tartrate 25mg BID, Atorvastatin 20mg QPM, Aspirin 81mg Daily',
+      visitsCount: 3,
+      lastVisitDate: '2026-06-14',
+      reports: [
+        {
+          id: 'REP-2026-0614-01',
+          encounterDate: '2026-06-14',
+          department: 'Cardiology Clinic - Suite 4B',
+          doctorName: 'Dr. Sarah Chen, MD',
+          chiefComplaint: 'Substernal chest tightness on moderate physical exertion',
+          diagnosis: 'Stable Angina Pectoris (CCS Class II)',
+          icdCode: 'I20.9',
+          vitals: { bp: '138/84', hr: 72, spo2: 98, temp: 36.9, rr: 16, pain: 4 },
+          soap: {
+            subjective: 'Patient reports dull squeezing chest pressure occurring after 2 flights of stairs. Relieved within 3-4 minutes of resting. Denies diaphoresis, syncope, or orthopnea.',
+            objective: 'Seated BP 138/84, HR 72 bpm regular, lungs clear bilaterally. In-clinic 12-Lead ECG: Normal sinus rhythm with mild non-specific lateral T-wave flattening.',
+            assessment: 'Exertional Angina Pectoris CCS Class II in patient with established hypertension and dyslipidemia.',
+            plan: 'Initiate Metoprolol 25mg PO BID. Prescribe Sublingual Nitroglycerin 0.4mg PRN. Schedule outpatient exercise stress test in 2 weeks.'
+          },
+          labResults: [
+            { testName: 'High-Sensitivity Troponin I', value: '< 0.01', unit: 'ng/mL', reference: '< 0.04', status: 'NORMAL' },
+            { testName: 'Lipid Panel - Total Cholesterol', value: '185', unit: 'mg/dL', reference: '< 200', status: 'NORMAL' },
+            { testName: 'Lipid Panel - LDL Cholesterol', value: '102', unit: 'mg/dL', reference: '< 100', status: 'BORDERLINE' },
+            { testName: 'Serum Creatinine', value: '1.02', unit: 'mg/dL', reference: '0.70 - 1.30', status: 'NORMAL' }
+          ],
+          medications: ['Metoprolol Tartrate 25mg PO BID', 'Atorvastatin 20mg PO Daily', 'Aspirin 81mg PO Daily', 'Nitroglycerin 0.4mg SL PRN'],
+          dischargeNotes: 'Advised to cease strenuous exertion immediately upon chest discomfort. Take nitro as directed and dial 911 if pain exceeds 5 minutes.'
+        },
+        {
+          id: 'REP-2026-0210-02',
+          encounterDate: '2026-02-10',
+          department: 'Internal Medicine / Adult Primary Care',
+          doctorName: 'Dr. Arthur Pendelton, MD',
+          chiefComplaint: 'Routine 6-month blood pressure check and prescription renewal',
+          diagnosis: 'Essential (Primary) Hypertension, Stage 1',
+          icdCode: 'I10',
+          vitals: { bp: '140/86', hr: 76, spo2: 99, temp: 36.7, rr: 14, pain: 0 },
+          soap: {
+            subjective: 'Patient asymptomatic. Self-monitored home blood pressures averaging 136-142 systolic. Compliant with diet and medications.',
+            objective: 'BP 140/86 mmHg right arm seated. BMI 27.8 kg/m2. Heart sounds normal S1/S2 without murmur. Peripheral pulses 2+ symmetric.',
+            assessment: 'Stage 1 Essential Hypertension with mild baseline cardiovascular risk.',
+            plan: 'Continue Amlodipine 5mg PO daily. Re-emphasized dietary sodium reduction and 30 min daily walking.'
+          },
+          labResults: [
+            { testName: 'Basic Metabolic Panel - Potassium', value: '4.3', unit: 'mEq/L', reference: '3.5 - 5.0', status: 'NORMAL' },
+            { testName: 'Fasting Plasma Glucose', value: '98', unit: 'mg/dL', reference: '70 - 99', status: 'NORMAL' }
+          ],
+          medications: ['Amlodipine 5mg PO Daily', 'Atorvastatin 20mg PO Daily', 'Aspirin 81mg PO Daily'],
+          dischargeNotes: 'Continue home BP log. Follow up in 6 months or if headaches/visual changes occur.'
+        },
+        {
+          id: 'REP-2025-0922-03',
+          encounterDate: '2025-09-22',
+          department: 'Emergency Care Center',
+          doctorName: 'Dr. Mark Henderson, MD',
+          chiefComplaint: 'Sharp anterior chest wall pain aggravated by deep inspiration after moving furniture',
+          diagnosis: 'Musculoskeletal Costochondritis / Chest Wall Strain',
+          icdCode: 'M94.0',
+          vitals: { bp: '144/90', hr: 84, spo2: 98, temp: 37.0, rr: 18, pain: 6 },
+          soap: {
+            subjective: 'Sharp localized pain over 3rd and 4th left costochondral junctions following heavy lifting yesterday. Sharp upon palpation.',
+            objective: 'Focal reproducibility on palpation over left parasternal border. Normal heart sounds, no friction rub. Stat ECG normal sinus rhythm, no ST shifts.',
+            assessment: 'Acute musculoskeletal costochondritis. Low risk for acute coronary syndrome given reproducible localized tenderness and normal biomarkers.',
+            plan: 'Ibuprofen 400mg PO TID with meals PRN. Warm local compresses. Outpatient cardiology referral for baseline cardiovascular workup.'
+          },
+          labResults: [
+            { testName: 'Stat Troponin I (0 hr)', value: '< 0.01', unit: 'ng/mL', reference: '< 0.04', status: 'NORMAL' },
+            { testName: 'Stat Troponin I (3 hr repeat)', value: '< 0.01', unit: 'ng/mL', reference: '< 0.04', status: 'NORMAL' }
+          ],
+          medications: ['Ibuprofen 400mg PO TID PRN x 7 days'],
+          dischargeNotes: 'Discharged in stable condition. Instructed on red flag cardiac signs.'
+        }
+      ]
+    },
+    'MRN-3921047': {
+      mrn: 'MRN-3921047',
+      patientName: 'Amelia S. Torres',
+      age: 45,
+      gender: 'F',
+      dob: '1981-08-25',
+      allergies: ['No Known Drug Allergies (NKDA)'],
+      currentMeds: 'Propranolol 10mg PRN',
+      visitsCount: 2,
+      lastVisitDate: '2026-04-18',
+      reports: [
+        {
+          id: 'REP-2026-0418-01',
+          encounterDate: '2026-04-18',
+          department: 'Cardiology / Electrophysiology',
+          doctorName: 'Dr. Sarah Chen, MD',
+          chiefComplaint: 'Episodic sensation of skipped heart beats and flutter',
+          diagnosis: 'Premature Ventricular Contractions (PVCs), Benign',
+          icdCode: 'I49.3',
+          vitals: { bp: '124/80', hr: 86, spo2: 98, temp: 36.8, rr: 16, pain: 2 },
+          soap: {
+            subjective: 'Patient describes occasional "flip-flop" sensation in mid-chest, occurring primarily during evening hours or following coffee. Denies syncope, presyncope, or chest pressure.',
+            objective: '24-hour ambulatory Holter review: 1,420 single unifocal PVCs (1.2% total burden). No ventricular tachycardia or sinus pauses. Potassium 4.2, TSH 1.8.',
+            assessment: 'Low-burden benign premature ventricular complexes. Structural heart disease absent on prior echo.',
+            plan: 'Reassurance provided regarding benign nature. Limit dietary caffeine to <1 cup daily. Low-dose Propranolol 10mg PO PRN for symptomatic palpitations.'
+          },
+          labResults: [
+            { testName: 'Serum Potassium', value: '4.2', unit: 'mEq/L', reference: '3.5 - 5.0', status: 'NORMAL' },
+            { testName: 'Serum Magnesium', value: '2.1', unit: 'mg/dL', reference: '1.7 - 2.2', status: 'NORMAL' },
+            { testName: 'Thyroid Stimulating Hormone (TSH)', value: '1.85', unit: 'uIU/mL', reference: '0.40 - 4.50', status: 'NORMAL' }
+          ],
+          medications: ['Propranolol 10mg PO PRN palpitations'],
+          dischargeNotes: 'Return if palpitations become sustained or associated with lightheadedness.'
+        },
+        {
+          id: 'REP-2025-1005-02',
+          encounterDate: '2025-10-05',
+          department: 'General Medicine Clinic',
+          doctorName: 'Dr. Arthur Pendelton, MD',
+          chiefComplaint: 'Generalized fatigue, mild lightheadedness upon standing',
+          diagnosis: 'Dehydration with Orthostatic Sinus Tachycardia',
+          icdCode: 'R00.0',
+          vitals: { bp: '112/70', hr: 96, spo2: 99, temp: 36.6, rr: 16, pain: 0 },
+          soap: {
+            subjective: 'Working long hours in heated environment, insufficient fluid intake. Denies melena, hematochezia, or heavy menses.',
+            objective: 'Mucous membranes slightly dry. Orthostatic vitals: Lying 118/74 HR 78 -> Standing 108/68 HR 96. CBC normal, Ferritin 48 ng/mL.',
+            assessment: 'Volume depletion / orthostatic sinus tachycardia.',
+            plan: 'Oral hydration therapy (2-2.5L water daily). Electrolyte replenishment.'
+          },
+          labResults: [
+            { testName: 'Hemoglobin', value: '13.4', unit: 'g/dL', reference: '12.0 - 15.5', status: 'NORMAL' },
+            { testName: 'Serum Ferritin', value: '48', unit: 'ng/mL', reference: '15 - 150', status: 'NORMAL' }
+          ],
+          medications: ['Oral electrolyte hydration solution'],
+          dischargeNotes: 'Condition resolved with fluid repletion.'
+        }
+      ]
+    },
+    'MRN-7012334': {
+      mrn: 'MRN-7012334',
+      patientName: 'James K. Patel',
+      age: 54,
+      gender: 'M',
+      dob: '1972-03-15',
+      allergies: ['No Known Drug Allergies (NKDA)'],
+      currentMeds: 'Atorvastatin 40mg Daily, Metoprolol Tartrate 50mg BID, Clopidogrel 75mg Daily, Aspirin 81mg Daily',
+      visitsCount: 4,
+      lastVisitDate: '2026-05-12',
+      reports: [
+        {
+          id: 'REP-2026-0512-01',
+          encounterDate: '2026-05-12',
+          department: 'Post-PCI Cardiovascular Clinic',
+          doctorName: 'Dr. Sarah Chen, MD',
+          chiefComplaint: '6-month post-PCI follow-up and cardiac rehab graduation check',
+          diagnosis: 'Coronary Artery Disease Status Post LAD Stent (ICD-10 I25.10)',
+          icdCode: 'I25.10',
+          vitals: { bp: '118/74', hr: 66, spo2: 99, temp: 36.6, rr: 14, pain: 0 },
+          soap: {
+            subjective: 'Patient completed 36 sessions of Phase II Cardiac Rehab with excellent exercise tolerance (7.5 METs). Denies chest pain, dyspnea, or palpitations.',
+            objective: 'Seated BP 118/74, resting HR 66. Post-rehab Transthoracic Echo: LVEF 55-60%, mild apical hypokinesis improved compared to acute discharge echo.',
+            assessment: 'Optimal post-myocardial infarction recovery with excellent functional capacity on guideline-directed medical therapy.',
+            plan: 'Continue dual antiplatelet therapy (Clopidogrel + Aspirin) through month 12. Maintain high-intensity Atorvastatin 40mg and Metoprolol 50mg BID.'
+          },
+          labResults: [
+            { testName: 'Lipid Panel - LDL Cholesterol', value: '54', unit: 'mg/dL', reference: '< 70 (Post-MI goal)', status: 'NORMAL' },
+            { testName: 'HbA1c', value: '5.6', unit: '%', reference: '< 5.7', status: 'NORMAL' },
+            { testName: 'eGFR Kidney Function', value: '88', unit: 'mL/min/1.73m2', reference: '> 60', status: 'NORMAL' }
+          ],
+          medications: ['Clopidogrel 75mg PO Daily', 'Aspirin 81mg PO Daily', 'Atorvastatin 40mg PO Daily', 'Metoprolol Tartrate 50mg PO BID'],
+          dischargeNotes: 'Patient cleared for independent Phase III gym exercise program. Next cardiology visit in 6 months.'
+        },
+        {
+          id: 'REP-2025-1104-02',
+          encounterDate: '2025-11-04',
+          department: 'Inpatient Cardiology / Cardiac Cath Lab',
+          doctorName: 'Dr. Sarah Chen, MD',
+          chiefComplaint: 'Inpatient Discharge Summary: Acute NSTEMI',
+          diagnosis: 'Non-ST-Elevation Myocardial Infarction (NSTEMI) (ICD-10 I21.4)',
+          icdCode: 'I21.4',
+          vitals: { bp: '122/78', hr: 70, spo2: 99, temp: 36.8, rr: 15, pain: 0 },
+          soap: {
+            subjective: 'Presented to emergency department with acute retrosternal pressure. Emergency coronary angiography performed.',
+            objective: 'Cath findings: 90% thrombotic stenosis of mid-LAD. Successful deployment of 3.0 x 18mm drug-eluting stent with TIMI 3 flow restored. Peak Troponin 4.82 ng/mL.',
+            assessment: 'Acute NSTEMI successfully revascularized via primary PCI.',
+            plan: 'Discharged on GDMT: DAPT, high-potency statin, beta-blocker, ACE inhibitor. Enrolled in outpatient cardiac rehabilitation.'
+          },
+          labResults: [
+            { testName: 'Peak Troponin I', value: '4.82', unit: 'ng/mL', reference: '< 0.04', status: 'HIGH' },
+            { testName: 'Peak CK-MB', value: '38', unit: 'ng/mL', reference: '< 5.0', status: 'HIGH' }
+          ],
+          medications: ['Ticagrelor 90mg PO BID', 'Aspirin 81mg PO Daily', 'Atorvastatin 80mg PO Daily', 'Metoprolol Succinate 50mg PO Daily'],
+          dischargeNotes: 'Inpatient stay completed without arrhythmias or access site hematoma.'
+        }
+      ]
+    },
+    'MRN-6634902': {
+      mrn: 'MRN-6634902',
+      patientName: 'Linda M. Chow',
+      age: 71,
+      gender: 'F',
+      dob: '1955-07-19',
+      allergies: ['Latex (Mild contact dermatitis)'],
+      currentMeds: 'Furosemide 20mg Daily, Lisinopril 10mg Daily, Metformin 500mg BID',
+      visitsCount: 2,
+      lastVisitDate: '2026-03-29',
+      reports: [
+        {
+          id: 'REP-2026-0329-01',
+          encounterDate: '2026-03-29',
+          department: 'Geriatric & Heart Failure Clinic',
+          doctorName: 'Dr. Sarah Chen, MD',
+          chiefComplaint: 'Bilateral ankle edema and mild shortness of breath when climbing stairs',
+          diagnosis: 'Heart Failure with Preserved Ejection Fraction (HFpEF) (ICD-10 I50.32)',
+          icdCode: 'I50.32',
+          vitals: { bp: '136/88', hr: 92, spo2: 96, temp: 37.1, rr: 18, pain: 3 },
+          soap: {
+            subjective: 'Patient reports gradual onset of puffy ankles over 2 weeks and needing 2 pillows to sleep comfortably. Denies fever or chest pressure.',
+            objective: 'BP 136/88, SpO2 96% on room air. Trace jugular venous distension, 1+ bilateral pitting pretibial edema. Lungs clear with faint bibasilar crackles.',
+            assessment: 'Mild volume overload secondary to diastolic dysfunction (HFpEF NYHA Class II).',
+            plan: 'Initiate Furosemide 20mg PO every morning. Daily weight monitoring protocol (notify clinic if >3 lbs gain in 2 days). Limit dietary sodium to <2000 mg/day.'
+          },
+          labResults: [
+            { testName: 'NT-proBNP Natriuretic Peptide', value: '620', unit: 'pg/mL', reference: '< 300 (Age-adjusted)', status: 'HIGH' },
+            { testName: 'Serum Potassium', value: '4.4', unit: 'mEq/L', reference: '3.5 - 5.0', status: 'NORMAL' },
+            { testName: 'Serum Creatinine', value: '1.08', unit: 'mg/dL', reference: '0.60 - 1.10', status: 'NORMAL' }
+          ],
+          medications: ['Furosemide 20mg PO Daily in AM', 'Lisinopril 10mg PO Daily', 'Metformin 500mg PO BID'],
+          dischargeNotes: 'Take diuretic in the morning with breakfast. Follow up in 4 weeks for electrolyte and renal panel check.'
+        }
+      ]
+    },
+    'MRN-8849201': {
+      mrn: 'MRN-8849201',
+      patientName: 'Marcus Reynolds',
+      age: 42,
+      gender: 'M',
+      dob: '1984-05-18',
+      allergies: ['Penicillin (Moderate rash)'],
+      currentMeds: 'None',
+      visitsCount: 1,
+      lastVisitDate: '2026-09-07',
+      reports: [
+        {
+          id: 'REP-2026-0907-01',
+          encounterDate: '2026-09-07',
+          department: 'Executive Wellness & Preventive Health',
+          doctorName: 'Dr. Arthur Pendelton, MD',
+          chiefComplaint: 'Annual preventive health checkup and occupational physical',
+          diagnosis: 'Routine General Medical Examination (ICD-10 Z00.00)',
+          icdCode: 'Z00.00',
+          vitals: { bp: '120/80', hr: 74, spo2: 99, temp: 36.8, rr: 14, pain: 0 },
+          soap: {
+            subjective: 'Patient feels energetic and exercises 3 times weekly. Reports no chronic medical symptoms.',
+            objective: 'Normal physical exam. Normal heart and lung auscultation. Visual acuity 20/20 uncorrected.',
+            assessment: 'Healthy 42-year-old adult with mild borderline hypertriglyceridemia.',
+            plan: 'Nutritional counseling regarding Mediterranean diet and omega-3 fatty acids. Routine follow up in 1 year.'
+          },
+          labResults: [
+            { testName: 'Lipid Panel - Triglycerides', value: '172', unit: 'mg/dL', reference: '< 150', status: 'BORDERLINE' },
+            { testName: 'Fasting Blood Glucose', value: '92', unit: 'mg/dL', reference: '70 - 99', status: 'NORMAL' }
+          ],
+          medications: ['Daily Multivitamin'],
+          dischargeNotes: 'Health maintenance parameters up to date. Tdap vaccine booster administered.'
+        }
+      ]
+    },
+    'MRN-4190822': {
+      mrn: 'MRN-4190822',
+      patientName: 'Emily Watson',
+      age: 34,
+      gender: 'F',
+      dob: '1992-11-14',
+      allergies: ['Morphine (Severe nausea/emesis)', 'Codeine (Dizziness)'],
+      currentMeds: 'Ethinyl estradiol / drospirenone oral contraceptive',
+      visitsCount: 2,
+      lastVisitDate: '2026-03-02',
+      reports: [
+        {
+          id: 'REP-2026-0302-01',
+          encounterDate: '2026-03-02',
+          department: 'General Surgery / Outpatient Post-Op',
+          doctorName: 'Dr. Mark Henderson, MD',
+          chiefComplaint: 'Post-operative follow-up following laparoscopic appendectomy',
+          diagnosis: 'Status Post Laparoscopic Appendectomy for Acute Appendicitis (ICD-10 K35.80)',
+          icdCode: 'K35.80',
+          vitals: { bp: '116/72', hr: 76, spo2: 99, temp: 36.7, rr: 14, pain: 1 },
+          soap: {
+            subjective: 'Patient is 14 days post-op laparoscopic appendectomy. Tolerating regular diet, normal bowel habits, no fever or wound discharge.',
+            objective: 'Three laparoscopic port sites clean, dry, well-approximated with no erythema or fluctuance. Abdomen soft and non-tender.',
+            assessment: 'Complete post-surgical recovery without complication.',
+            plan: 'Clear for full physical activity and unrestricted diet. PRN follow-up.'
+          },
+          labResults: [
+            { testName: 'Post-Op Complete Blood Count - WBC', value: '6.4', unit: 'K/uL', reference: '4.5 - 11.0', status: 'NORMAL' }
+          ],
+          medications: ['Acetaminophen 500mg PO PRN mild discomfort'],
+          dischargeNotes: 'Surgical recovery completed successfully.'
+        }
+      ]
+    }
+  };
+
+  // Helper to query patient history by MRN or Name
+  getPatientHistory(mrnOrName?: string): { isReturning: boolean; visitsCount: number; lastVisit: string; reports: HistoricalReport[]; record?: PatientHistoryRecord } {
+    if (!mrnOrName) {
+      return { isReturning: false, visitsCount: 0, lastVisit: 'None', reports: [] };
+    }
+    const q = mrnOrName.trim().toLowerCase();
+
+    // 1. Direct match by MRN key
+    for (const [key, record] of Object.entries(this.patientHistoryDatabase)) {
+      if (key.toLowerCase() === q || q.includes(key.toLowerCase()) || key.toLowerCase().includes(q)) {
+        return {
+          isReturning: true,
+          visitsCount: record.visitsCount,
+          lastVisit: record.lastVisitDate,
+          reports: record.reports,
+          record
+        };
+      }
+    }
+
+    // 2. Match by patient name
+    for (const record of Object.values(this.patientHistoryDatabase)) {
+      if (record.patientName.toLowerCase() === q ||
+          record.patientName.toLowerCase().includes(q) ||
+          q.includes(record.patientName.toLowerCase())) {
+        return {
+          isReturning: true,
+          visitsCount: record.visitsCount,
+          lastVisit: record.lastVisitDate,
+          reports: record.reports,
+          record
+        };
+      }
+    }
+
+    return { isReturning: false, visitsCount: 0, lastVisit: 'None', reports: [] };
+  }
+
+  // Active patient history for Doctor Workspace
+  get activePatientHistory() {
+    const mrn = this.selectedQueuePatient?.mrn || this.activeEncounter.patient?.mrn;
+    const name = this.selectedQueuePatient?.patientName || this.activeEncounter.patient?.fullName;
+    return this.getPatientHistory(mrn || name);
+  }
+
+  // List of all registered history records for quick-select in Reception
+  get registeredPatientsList(): PatientHistoryRecord[] {
+    return Object.values(this.patientHistoryDatabase);
+  }
+
+  // Historical Report Modal State
+  isHistoricalReportModalOpen = false;
+  activeHistoricalReport: HistoricalReport | null = null;
+
+  openHistoricalReportModal(report: HistoricalReport) {
+    this.activeHistoricalReport = report;
+    this.isHistoricalReportModalOpen = true;
+  }
+
+  closeHistoricalReportModal() {
+    this.isHistoricalReportModalOpen = false;
+    this.activeHistoricalReport = null;
+  }
+
+  // Reception State & Methods
+  receptionSearchQuery = '';
+  isReceptionBookingModalOpen = false;
+  receptionBookingForm = {
+    patientLookupQuery: '',
+    isExistingPatient: false,
+    matchedPatient: null as PatientHistoryRecord | null,
+    patientName: '',
+    mrn: '',
+    age: 45,
+    gender: 'M',
+    department: 'Cardiology',
+    chiefComplaint: '',
+    priority: 'ROUTINE',
+    preferredTime: 'Now (Walk-In)',
+    allergies: 'No known drug allergies (NKDA)'
+  };
+
+  openReceptionBookingModal() {
+    this.receptionBookingForm = {
+      patientLookupQuery: '',
+      isExistingPatient: false,
+      matchedPatient: null,
+      patientName: '',
+      mrn: '',
+      age: 45,
+      gender: 'M',
+      department: 'Cardiology',
+      chiefComplaint: '',
+      priority: 'ROUTINE',
+      preferredTime: 'Now (Walk-In)',
+      allergies: 'No known drug allergies (NKDA)'
+    };
+    this.isReceptionBookingModalOpen = true;
+  }
+
+  onReceptionPatientLookup(query: string) {
+    this.receptionBookingForm.patientLookupQuery = query;
+    if (!query || query.trim().length < 2) {
+      this.receptionBookingForm.isExistingPatient = false;
+      this.receptionBookingForm.matchedPatient = null;
+      return;
+    }
+    const history = this.getPatientHistory(query);
+    if (history.isReturning && history.record) {
+      const rec = history.record;
+      this.receptionBookingForm.isExistingPatient = true;
+      this.receptionBookingForm.matchedPatient = rec;
+      this.receptionBookingForm.patientName = rec.patientName;
+      this.receptionBookingForm.mrn = rec.mrn;
+      this.receptionBookingForm.age = rec.age;
+      this.receptionBookingForm.gender = rec.gender;
+      this.receptionBookingForm.allergies = rec.allergies.join(', ') || 'No known drug allergies (NKDA)';
+    } else {
+      this.receptionBookingForm.isExistingPatient = false;
+      this.receptionBookingForm.matchedPatient = null;
+    }
+  }
+
+  selectExistingPatientForWalkIn(rec: PatientHistoryRecord) {
+    this.receptionBookingForm.patientLookupQuery = `${rec.patientName} (${rec.mrn})`;
+    this.receptionBookingForm.isExistingPatient = true;
+    this.receptionBookingForm.matchedPatient = rec;
+    this.receptionBookingForm.patientName = rec.patientName;
+    this.receptionBookingForm.mrn = rec.mrn;
+    this.receptionBookingForm.age = rec.age;
+    this.receptionBookingForm.gender = rec.gender;
+    this.receptionBookingForm.allergies = rec.allergies.join(', ') || 'No known drug allergies (NKDA)';
+    this.showToast(`Selected existing patient: ${rec.patientName} (${rec.mrn}) — ${rec.visitsCount} previous reports linked`, 'info');
+  }
+
+  clearReceptionLookup() {
+    this.receptionBookingForm.patientLookupQuery = '';
+    this.receptionBookingForm.isExistingPatient = false;
+    this.receptionBookingForm.matchedPatient = null;
+    this.receptionBookingForm.patientName = '';
+    this.receptionBookingForm.mrn = '';
+    this.receptionBookingForm.age = 45;
+    this.receptionBookingForm.gender = 'M';
+    this.receptionBookingForm.allergies = 'No known drug allergies (NKDA)';
+  }
+
+  submitReceptionBooking(autoCheckIn: boolean = true) {
+    if (!this.receptionBookingForm.patientName.trim()) {
+      this.showToast('Please enter patient full name or select an existing patient', 'error');
+      return;
+    }
+    if (!this.receptionBookingForm.chiefComplaint.trim()) {
+      this.showToast('Please enter symptoms / chief complaint', 'error');
+      return;
+    }
+
+    const isExisting = this.receptionBookingForm.isExistingPatient && !!this.receptionBookingForm.matchedPatient;
+    const finalMrn = isExisting
+      ? this.receptionBookingForm.matchedPatient!.mrn
+      : (this.receptionBookingForm.mrn.trim() || `MRN-${Math.floor(1000000 + Math.random() * 9000000)}`);
+
+    const newId = `APT-2026-000${this.appointments.length + 125}`;
+
+    const newApt = {
+      id: newId,
+      patientName: this.receptionBookingForm.patientName.trim(),
+      mrn: finalMrn,
+      age: Number(this.receptionBookingForm.age) || 45,
+      gender: this.receptionBookingForm.gender || 'M',
+      department: this.receptionBookingForm.department || 'Cardiology',
+      chiefComplaint: this.receptionBookingForm.chiefComplaint.trim(),
+      preferredDate: new Date().toISOString().split('T')[0],
+      preferredTime: this.receptionBookingForm.preferredTime || 'Now (Walk-In)',
+      severity: this.receptionBookingForm.priority || 'ROUTINE',
+      status: autoCheckIn ? 'WAITING_NURSE' : 'SCHEDULED',
+      waitingMins: autoCheckIn ? 1 : 0,
+      nurseNotes: autoCheckIn
+        ? (isExisting
+            ? `Returning patient (${this.receptionBookingForm.matchedPatient!.visitsCount} previous visits). Walk-in arrival registered at reception.`
+            : 'New walk-in patient registered at reception desk. Awaiting preliminary triage.')
+        : '',
+      vitals: null,
+      labOrders: [],
+      caseSheet: null,
+      isReturning: isExisting
+    };
+
+    this.appointments.unshift(newApt);
+    this.isReceptionBookingModalOpen = false;
+
+    if (autoCheckIn) {
+      this.showToast(`✅ ${isExisting ? 'Returning' : 'Walk-in'} patient ${newApt.patientName} (${newApt.mrn}) registered & checked in → Dispatched to Nurse Triage!`, 'success');
+    } else {
+      this.showToast(`✅ Appointment ${newId} booked for ${newApt.patientName} (${newApt.mrn})! Added to scheduled arrivals.`, 'success');
+    }
+  }
+
+  get scheduledAppointments() {
+    return this.appointments
+      .filter(a => a.status === 'SCHEDULED' || a.status === 'CHECKED_IN')
+      .filter(a => {
+        if (!this.receptionSearchQuery.trim()) return true;
+        const q = this.receptionSearchQuery.toLowerCase();
+        return (
+          a.id.toLowerCase().includes(q) ||
+          a.patientName.toLowerCase().includes(q) ||
+          a.mrn.toLowerCase().includes(q) ||
+          a.department.toLowerCase().includes(q)
+        );
+      });
+  }
+
+  checkInPatient(apt: any) {
+    if (apt.status !== 'SCHEDULED') {
+      this.showToast('Appointment is already checked in or processed.', 'info');
+      return;
+    }
+    apt.status = 'WAITING_NURSE';
+    apt.waitingMins = 1;
+    this.showToast(`Checked in: ${apt.patientName} (${apt.id}) → Routed to Nurse Queue`, 'success');
+  }
+
+  // Nurse Queue & Triage State
+  get nurseQueue() {
+    return this.appointments.filter(a => a.status === 'WAITING_NURSE' || a.status === 'IN_NURSE_ASSESSMENT');
+  }
+
+  activeTriagePatient: any = null;
+  isTriageModalOpen = false;
+  triageForm = {
+    temp: 37.0,
+    hr: 78,
+    bp: '120/80',
+    rr: 16,
+    spo2: 98,
+    height: 175,
+    weight: 75,
+    pain: 2,
+    glucose: 100,
+    allergies: 'No known drug allergies (NKDA)',
+    currentMeds: 'None',
+    triageNotes: '',
+    severity: 'URGENT',
+    department: 'Cardiology'
+  };
+
+  claimNursePatient(patient: any) {
+    patient.status = 'IN_NURSE_ASSESSMENT';
+    this.activeTriagePatient = patient;
+    this.triageForm.department = patient.department || 'Cardiology';
+    this.triageForm.triageNotes = `Patient presents with: ${patient.chiefComplaint}`;
+    this.isTriageModalOpen = true;
+    this.showToast(`Nurse claimed ${patient.patientName} — Starting preliminary triage`, 'info');
+  }
+
+  submitNurseTriage() {
+    if (!this.activeTriagePatient) return;
+    this.activeTriagePatient.vitals = {
+      bp: this.triageForm.bp,
+      hr: this.triageForm.hr,
+      spo2: this.triageForm.spo2,
+      temp: this.triageForm.temp,
+      rr: this.triageForm.rr,
+      height: this.triageForm.height,
+      weight: this.triageForm.weight,
+      pain: this.triageForm.pain,
+      glucose: this.triageForm.glucose
+    };
+    this.activeTriagePatient.severity = this.triageForm.severity;
+    this.activeTriagePatient.department = this.triageForm.department;
+    this.activeTriagePatient.nurseNotes = this.triageForm.triageNotes;
+    this.activeTriagePatient.status = 'WAITING_DEPARTMENT';
+    this.activeTriagePatient.waitingMins = 2;
+
+    this.showToast(`✅ Triage complete! ${this.activeTriagePatient.patientName} routed to ${this.triageForm.department} Queue.`, 'success');
+    this.isTriageModalOpen = false;
+    this.activeTriagePatient = null;
+  }
+
+  // Doctor Department Queue
+  get doctorQueue() {
+    return this.appointments
+      .filter(a => a.status === 'WAITING_DEPARTMENT' || a.status === 'IN_DOCTOR_CONSULTATION' || a.status === 'RETURNED_TO_DOCTOR')
+      .sort((a, b) => {
+        const priorityOrder: Record<string, number> = { EMERGENCY: 1, HIGH_PRIORITY: 2, URGENT: 3, ROUTINE: 4 };
+        const pA = priorityOrder[a.severity] || 5;
+        const pB = priorityOrder[b.severity] || 5;
+        return pA - pB;
+      });
+  }
+
+  selectedQueuePatient: any = null;
+
+  severityLabel(s: string) {
+    const map: Record<string, string> = {
+      EMERGENCY: 'Emergency',
+      HIGH_PRIORITY: 'High Priority',
+      URGENT: 'Urgent',
+      ROUTINE: 'Routine',
+    };
+    return map[s] || s;
+  }
+
+  severityClass(s: string) {
+    const map: Record<string, string> = {
+      EMERGENCY: 'bg-red-100 text-red-700 border-red-200',
+      HIGH_PRIORITY: 'bg-orange-100 text-orange-700 border-orange-200',
+      URGENT: 'bg-amber-100 text-amber-700 border-amber-200',
+      ROUTINE: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    };
+    return map[s] || 'bg-slate-100 text-slate-600 border-slate-200';
+  }
+
+  claimPatient(patient: any) {
+    this.selectedQueuePatient = patient;
+    patient.status = 'IN_DOCTOR_CONSULTATION';
+
+    const history = this.getPatientHistory(patient.mrn || patient.patientName);
+
+    // Update active encounter patient metadata
+    this.activeEncounter.patient = {
+      mrn: patient.mrn || 'MRN-5847619',
+      fullName: patient.patientName,
+      age: patient.age || 45,
+      gender: patient.gender || 'M',
+      dob: history.record?.dob || '1975-06-12',
+      encounterType: 'Outpatient Consultation',
+      department: patient.department || 'Cardiology',
+      room: 'Room 4B',
+      allergies: history.record?.allergies || ['No known drug allergies (NKDA)'],
+      primaryCareProvider: 'Dr. Sarah Chen, MD',
+      insurance: 'Medicare Part B / Blue Cross PPO'
+    };
+
+    if (patient.clinicalSession) {
+      // Resume previously saved consultation session
+      this.soapNote = { ...patient.clinicalSession.soap };
+      this.entities = [...patient.clinicalSession.entities];
+      this.activeEncounter.utterances = [...patient.clinicalSession.utterances];
+      this.visibleUtteranceCount = patient.clinicalSession.utterances.length;
+      this.timerSeconds = patient.clinicalSession.timerSeconds || 0;
+      this.showToast(`Resumed consultation for ${patient.patientName}`, 'info');
+    } else {
+      // Clean initial empty state
+      this.activeEncounter.utterances = [];
+      this.visibleUtteranceCount = 0;
+      this.timerSeconds = 0;
+      this.entities = [];
+      this.soapNote = {
+        subjective: {
+          chiefComplaint: patient.chiefComplaint || '',
+          historyOfPresentIllness: '',
+          reviewOfSystems: '',
+          currentMedications: history.record?.currentMeds || '',
+          allergies: history.record?.allergies?.join(', ') || 'No known drug allergies (NKDA)'
+        },
+        objective: {
+          vitals: patient.vitals ? `BP: ${patient.vitals.bp} mmHg | HR: ${patient.vitals.hr} bpm | SpO2: ${patient.vitals.spo2}% | Temp: ${patient.vitals.temp}°C` : '',
+          physicalExam: '',
+          diagnosticResults: ''
+        },
+        assessment: {
+          primaryDiagnosis: '',
+          differentialDiagnoses: [],
+          clinicalImpression: ''
+        },
+        plan: {
+          diagnostics: '',
+          medicationsAndRx: '',
+          patientEducation: '',
+          followUp: ''
+        },
+        lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isSigned: false
+      };
+      patient.clinicalSession = {
+        soap: { ...this.soapNote },
+        entities: [...this.entities],
+        utterances: [...this.activeEncounter.utterances],
+        timerSeconds: 0
+      };
+      this.showToast(`Started consultation for ${patient.patientName} (Workspace initialized empty)`, 'success');
+    }
+
+    this.doctorView = 'workspace';
+  }
+
+  resumeConsultation(patient: any) {
+    this.claimPatient(patient);
+  }
+
+  exitConsultation() {
+    if (this.selectedQueuePatient) {
+      this.selectedQueuePatient.clinicalSession = {
+        soap: { ...this.soapNote },
+        entities: [...this.entities],
+        utterances: [...this.activeEncounter.utterances],
+        timerSeconds: this.timerSeconds
+      };
+    }
+    this.doctorView = 'landing';
+  }
+
+  finishConsultation() {
+    if (!this.selectedQueuePatient) {
+      this.showToast('No active patient consultation selected.', 'error');
+      return;
+    }
+    const patientName = this.selectedQueuePatient.patientName;
+    this.selectedQueuePatient.status = 'COMPLETED';
+
+    const p = this.selectedQueuePatient;
+    const timestamp = new Date().toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+    });
+
+    const caseSheet = {
+      caseSheetId: `CS-${Date.now().toString().slice(-6)}`,
+      createdAt: timestamp,
+      consultant: 'Dr. Sarah Chen, MD, FACC',
+      consultantNpi: '1098237461',
+      department: p.department || 'Cardiology',
+      patient: {
+        name: p.patientName,
+        mrn: p.mrn,
+        age: p.age,
+        gender: p.gender,
+        dob: '1975-06-12',
+        allergies: 'No known drug allergies (NKDA)'
+      },
+      encounter: {
+        appointmentId: p.appointmentId || p.id,
+        encounterType: 'Outpatient Specialist Consultation',
+        room: 'Cardiology Clinic - Room 4B'
+      },
+      chiefComplaint: p.chiefComplaint || 'Exertional symptoms',
+      historyOfPresentIllness: this.soapNote.subjective?.historyOfPresentIllness || 'Patient evaluated for reported symptoms. Clinical examination and treatment plan formulated.',
+      pastMedicalHistory: 'Essential Hypertension, Hyperlipidemia.',
+      pastSurgicalHistory: 'None reported.',
+      medicationHistory: 'Amlodipine 5mg Daily, Atorvastatin 20mg Daily.',
+      allergyInfo: 'No known drug allergies (NKDA).',
+      vitals: p.vitals || { bp: '138/84', hr: 72, spo2: 98, temp: 36.8, rr: 16, height: 175, weight: 75 },
+      physicalFindings: this.soapNote.objective?.physicalExam || 'Alert, oriented x3. Heart sounds regular, lungs clear bilaterally.',
+      investigationsOrdered: (p.labOrders || []).map((o: any) => o.testName).join(', ') || '12-Lead ECG, Lipid Panel',
+      labResults: (p.completedLabReports || []).map((r: any) => `${r.testName}: ${r.resultValue} (${r.abnormalFlag})`).join('\n') || 'Routine lab evaluation completed.',
+      soap: {
+        subjective: this.soapNote.subjective,
+        objective: this.soapNote.objective,
+        assessment: this.soapNote.assessment,
+        plan: this.soapNote.plan
+      },
+      finalDiagnosis: this.soapNote.assessment?.primaryDiagnosis || 'Clinical Consultation Complete',
+      prescription: this.parseMedications(this.soapNote.plan),
+      plan: this.soapNote.plan?.diagnostics || 'Medication therapy and follow-up as directed.',
+      followUp: 'Return as scheduled or PRN worsening symptoms.',
+      isRestrictedToConsultant: true
+    };
+
+    this.selectedQueuePatient.caseSheet = caseSheet;
+    this.selectedQueuePatient.clinicalSession = {
+      soap: { ...this.soapNote },
+      entities: [...this.entities],
+      utterances: [...this.activeEncounter.utterances],
+      timerSeconds: this.timerSeconds
+    };
+
+    this.selectedQueuePatient = null;
+    this.doctorView = 'landing';
+    this.showToast(`✅ Consultation completed for ${patientName}! Encounter finalized and archived.`, 'success');
+  }
+
+  generateSyntheticData() {
+    const patient = this.selectedQueuePatient || this.appointments[0];
+
+    const syntheticUtterances: TranscriptUtterance[] = [
+      {
+        id: 'u1',
+        speaker: 'doctor',
+        speakerName: 'Dr. Sarah Chen, MD',
+        text: `Good morning, ${patient.patientName}. I have your triage notes regarding ${patient.chiefComplaint || 'your symptoms'}. Can you tell me more about how and when this started?`,
+        timestamp: '00:06',
+        timeSec: 6,
+        confidence: 0.99
+      },
+      {
+        id: 'u2',
+        speaker: 'patient',
+        speakerName: `${patient.patientName} (Patient)`,
+        text: `Good morning, Doctor. It has been happening mainly when I exert myself or walk up stairs. I get this tightness right in the chest and feel a bit winded.`,
+        timestamp: '00:21',
+        timeSec: 21,
+        confidence: 0.98,
+        highlightedEntityIds: ['e1']
+      },
+      {
+        id: 'u3',
+        speaker: 'doctor',
+        speakerName: 'Dr. Sarah Chen, MD',
+        text: `Does the tightness radiate into your jaw, neck, or down your left arm? And how long does it usually take to subside when you rest?`,
+        timestamp: '00:33',
+        timeSec: 33,
+        confidence: 0.99
+      },
+      {
+        id: 'u4',
+        speaker: 'patient',
+        speakerName: `${patient.patientName} (Patient)`,
+        text: `It radiates slightly to my left shoulder. If I sit down and catch my breath, it usually resolves completely within 3 to 5 minutes. No cold sweats or fainting.`,
+        timestamp: '00:48',
+        timeSec: 48,
+        confidence: 0.97,
+        highlightedEntityIds: ['e1', 'e2']
+      },
+      {
+        id: 'u5',
+        speaker: 'doctor',
+        speakerName: 'Dr. Sarah Chen, MD',
+        text: `Let us verify your vitals from triage: seated BP is ${patient.vitals?.bp || '142/88 mmHg'}, heart rate ${patient.vitals?.hr || 102} bpm, oxygen saturation ${patient.vitals?.spo2 || 95}%. Heart sounds are regular with no gallop, lungs are clear to auscultation.`,
+        timestamp: '01:12',
+        timeSec: 72,
+        confidence: 0.99,
+        highlightedEntityIds: ['e8']
+      },
+      {
+        id: 'u6',
+        speaker: 'doctor',
+        speakerName: 'Dr. Sarah Chen, MD',
+        text: `This clinical picture is characteristic of exertional angina pectoris. We will order a 12-lead ECG and high-sensitivity Troponin I. I will prescribe Metoprolol 25mg twice daily, Aspirin 81mg, and Sublingual Nitroglycerin 0.4mg for acute episodes.`,
+        timestamp: '01:45',
+        timeSec: 105,
+        confidence: 0.99,
+        highlightedEntityIds: ['e3', 'e5', 'e6', 'e7']
+      },
+      {
+        id: 'u7',
+        speaker: 'patient',
+        speakerName: `${patient.patientName} (Patient)`,
+        text: `Thank you, Doctor. I will follow the medication schedule and report to the lab for the ordered tests.`,
+        timestamp: '02:02',
+        timeSec: 122,
+        confidence: 0.98
+      }
+    ];
+
+    const syntheticEntities: MedicalEntity[] = [
+      { id: 'e1', category: 'symptom', term: 'Substernal Chest Tightness (Exertional)', code: 'R07.9', system: 'ICD-10', confidence: 0.98, timestamp: '00:21', status: 'verified' },
+      { id: 'e2', category: 'symptom', term: 'Dyspnea on Exertion', code: 'R06.02', system: 'ICD-10', confidence: 0.96, timestamp: '00:48', status: 'verified' },
+      { id: 'e3', category: 'diagnosis', term: 'Stable Angina Pectoris (CCS Class II)', code: 'I20.9', system: 'ICD-10', confidence: 0.95, timestamp: '01:45', status: 'verified' },
+      { id: 'e4', category: 'diagnosis', term: 'Essential Hypertension', code: 'I10', system: 'ICD-10', confidence: 0.97, timestamp: '01:45', status: 'verified' },
+      { id: 'e5', category: 'medication', term: 'Aspirin 81 mg PO Daily', code: 'RxNorm: 243670', system: 'RxNorm', confidence: 0.99, timestamp: '01:45', status: 'verified' },
+      { id: 'e6', category: 'medication', term: 'Metoprolol Tartrate 25 mg PO BID', code: 'RxNorm: 866427', system: 'RxNorm', confidence: 0.97, timestamp: '01:45', status: 'verified' },
+      { id: 'e7', category: 'medication', term: 'Nitroglycerin 0.4 mg SL PRN', code: 'RxNorm: 316365', system: 'RxNorm', confidence: 0.99, timestamp: '01:45', status: 'verified' },
+      { id: 'e8', category: 'vital', term: `Blood Pressure: ${patient.vitals?.bp || '142/88'} mmHg`, code: 'LOINC: 85354-9', system: 'LOINC', confidence: 0.99, timestamp: '01:12', status: 'verified' },
+      { id: 'e9', category: 'allergy', term: 'No Known Drug Allergies (NKDA)', code: 'SNOMED: 716186003', system: 'SNOMED-CT', confidence: 0.99, timestamp: '00:06', status: 'verified' }
+    ];
+
+    const syntheticSoap: SoapNote = {
+      subjective: {
+        chiefComplaint: patient.chiefComplaint || 'Exertional substernal chest tightness and mild dyspnea × 2-3 weeks.',
+        historyOfPresentIllness: `${patient.age}-year-old ${patient.gender === 'M' ? 'male' : 'female'} presents with exertional substernal chest tightness occurring during physical activity (walking uphill, climbing stairs). Pain radiates mildly to the left shoulder and resolves with 3-5 minutes of rest. Denies syncope, resting angina, or cold diaphoresis.`,
+        reviewOfSystems: 'Positive for exertional chest tightness and mild dyspnea. Negative for palpitations, orthopnea, fever, cough, or peripheral edema.',
+        currentMedications: '1. Amlodipine 5 mg PO Daily\n2. Atorvastatin 20 mg PO Daily',
+        allergies: 'No Known Drug Allergies (NKDA)'
+      },
+      objective: {
+        vitals: patient.vitals ? `BP: ${patient.vitals.bp} mmHg | HR: ${patient.vitals.hr} bpm | SpO2: ${patient.vitals.spo2}% | Temp: ${patient.vitals.temp}°C | RR: ${patient.vitals.rr || 16} bpm` : 'BP: 138/84 mmHg | HR: 72 bpm | SpO2: 98% | Temp: 36.8°C',
+        physicalExam: 'Alert, oriented × 3, in no acute distress. Heart: S1/S2 present, regular rate and rhythm, no murmurs. Lungs: Clear to auscultation bilaterally. Abdomen: Soft, non-tender. Extremities: No edema, distal pulses intact 2+.',
+        diagnosticResults: '12-Lead ECG: Normal sinus rhythm at 72 bpm. Mild non-specific lateral T-wave flattening, no acute ST elevation/depression.'
+      },
+      assessment: {
+        primaryDiagnosis: 'Stable Angina Pectoris (ICD-10: I20.9) - CCS Class II',
+        differentialDiagnoses: ['Essential Hypertension (ICD-10: I10)', 'Gastroesophageal Reflux Disease (ICD-10: K21.9)', 'Costochondritis (ICD-10: M94.0)'],
+        clinicalImpression: 'Exertional myocardial ischemia pattern consistent with stable angina given symptom predictability, exertional provocation, and prompt relief with rest.'
+      },
+      plan: {
+        diagnostics: '1. 12-Lead Electrocardiogram (ECG) and High-Sensitivity Troponin I ordered.\n2. Outpatient Exercise Stress Echocardiogram.',
+        medicationsAndRx: '1. Metoprolol Tartrate 25 mg PO BID\n2. Aspirin 81 mg PO Daily\n3. Nitroglycerin 0.4 mg SL PRN for acute chest pressure (max 3 doses in 15 min; dial 911 if unresolved)\n4. Continue Atorvastatin 20 mg PO Daily at bedtime',
+        patientEducation: 'Reviewed ischemic warning signs, exertion limits, and emergency nitroglycerin protocol.',
+        followUp: 'Follow-up in Cardiology Clinic in 2 weeks with stress test and lab results.'
+      },
+      lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isSigned: false
+    };
+
+    this.activeEncounter.utterances = syntheticUtterances;
+    this.visibleUtteranceCount = syntheticUtterances.length;
+    this.timerSeconds = 122;
+    this.entities = syntheticEntities;
+    this.soapNote = syntheticSoap;
+
+    if (patient) {
+      patient.clinicalSession = {
+        soap: { ...this.soapNote },
+        entities: [...this.entities],
+        utterances: [...this.activeEncounter.utterances],
+        timerSeconds: this.timerSeconds
+      };
+    }
+
+    this.showToast(`✨ Synthetic clinical data generated for ${patient.patientName}! Transcripts, entities & SOAP notes populated.`, 'success');
+  }
+
+  // Gemini AI Suggestions State
+  isAiSuggestionsModalOpen = false;
+  aiSuggestions = {
+    considerations: [
+      'Evaluate for acute coronary syndrome (ACS) vs stable exertional angina.',
+      'Check lipid panel and baseline troponin due to exertional chest tightness and HTN history.',
+      'Consider 12-lead resting ECG and referral for outpatient exercise stress echocardiogram.'
+    ],
+    investigations: [
+      { name: '12-Lead Electrocardiogram (ECG)', priority: 'Urgent', indication: 'Assess for ischemic ST-T changes or arrhythmias', selected: true },
+      { name: 'High-Sensitivity Troponin I', priority: 'Urgent', indication: 'Rule out myocardial injury', selected: true },
+      { name: 'Lipid Panel (Total, HDL, LDL, Triglycerides)', priority: 'Routine', indication: 'Assess cardiovascular risk', selected: false },
+      { name: 'Complete Blood Count (CBC)', priority: 'Routine', indication: 'Rule out severe anemia contributing to exertional dyspnea', selected: false },
+      { name: 'Chest X-Ray (PA & Lateral)', priority: 'Routine', indication: 'Evaluate cardiac silhouette and pulmonary vasculature', selected: false }
+    ],
+    medications: [
+      { name: 'Aspirin (ASA)', dose: '81 mg', route: 'Oral', frequency: 'Daily', duration: 'Ongoing', instructions: 'Take with food in the morning', selected: true },
+      { name: 'Atorvastatin', dose: '40 mg', route: 'Oral', frequency: 'Once daily at bedtime', duration: 'Ongoing', instructions: 'Lipid-lowering and plaque stabilization', selected: true },
+      { name: 'Metoprolol Succinate ER', dose: '25 mg', route: 'Oral', frequency: 'Daily', duration: 'Ongoing', instructions: 'Target resting HR 60-70 bpm', selected: false },
+      { name: 'Nitroglycerin SL', dose: '0.4 mg', route: 'Sublingual', frequency: 'PRN chest pain', duration: '30 days', instructions: '1 tablet under tongue every 5 min up to 3 doses; call 911 if unresolved', selected: true }
+    ]
+  };
+
+  orderAiInvestigation(inv: any) {
+    if (!this.selectedQueuePatient) {
+      this.showToast('No active patient consultation selected.', 'error');
+      return;
+    }
+    const order = {
+      id: `ORD-${Date.now().toString().slice(-4)}`,
+      testName: inv.name,
+      priority: inv.priority,
+      indication: inv.indication,
+      status: 'ORDERED',
+      orderedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    if (!this.selectedQueuePatient.labOrders) {
+      this.selectedQueuePatient.labOrders = [];
+    }
+    this.selectedQueuePatient.labOrders.push(order);
+    this.showToast(`📋 Lab order created: ${inv.name}. Sent to patient for acceptance.`, 'success');
+  }
+
+  // Lab Technician Queue & Execution State
+  labQueue: any[] = [
+    {
+      id: 'LAB-ORD-101',
+      appointmentId: 'APT-2026-000123',
+      patientName: 'Robert H. Vance',
+      mrn: 'MRN-5847619',
+      age: 62,
+      gender: 'M',
+      testName: 'High-Sensitivity Troponin I',
+      priority: 'Urgent',
+      indication: 'Exertional chest tightness — rule out NSTEMI',
+      status: 'WAITING_LAB',
+      orderedAt: '09:15 AM',
+      result: null
+    },
+    {
+      id: 'LAB-ORD-102',
+      appointmentId: 'APT-2026-000123',
+      patientName: 'Robert H. Vance',
+      mrn: 'MRN-5847619',
+      age: 62,
+      gender: 'M',
+      testName: '12-Lead Electrocardiogram (ECG)',
+      priority: 'Urgent',
+      indication: 'Rule out acute ST-segment changes',
+      status: 'WAITING_LAB',
+      orderedAt: '09:16 AM',
+      result: null
+    },
+    {
+      id: 'LAB-ORD-103',
+      appointmentId: 'APT-2026-000124',
+      patientName: 'Amelia S. Torres',
+      mrn: 'MRN-3921047',
+      age: 45,
+      gender: 'F',
+      testName: 'Lipid Panel',
+      priority: 'Routine',
+      indication: 'Baseline cardiovascular lipid workup',
+      status: 'WAITING_LAB',
+      orderedAt: '09:35 AM',
+      result: null
+    }
+  ];
+
+  activeLabExecution: any = null;
+  isLabResultModalOpen = false;
+  labResultForm = {
+    testName: '',
+    specimen: 'Venous Blood',
+    resultValue: '0.02 ng/mL',
+    referenceRange: '< 0.04 ng/mL',
+    abnormalFlag: 'Normal',
+    technicianNotes: 'Analyzed on Roche Cobas e411. Quality control within target limits.'
+  };
+
+  claimLabTask(task: any) {
+    task.status = 'IN_LAB';
+    this.activeLabExecution = task;
+    this.labResultForm.testName = task.testName;
+    if (task.testName.includes('Troponin')) {
+      this.labResultForm.resultValue = '0.02 ng/mL';
+      this.labResultForm.referenceRange = '< 0.04 ng/mL';
+      this.labResultForm.abnormalFlag = 'Normal';
+    } else if (task.testName.includes('ECG')) {
+      this.labResultForm.specimen = 'Surface 12-lead trace';
+      this.labResultForm.resultValue = 'Normal Sinus Rhythm, HR 72 bpm. PR 156ms, QRS 88ms, QTc 418ms. Non-specific lateral T-wave flattening.';
+      this.labResultForm.referenceRange = 'Normal morphology';
+      this.labResultForm.abnormalFlag = 'Borderline';
+    } else {
+      this.labResultForm.resultValue = 'Total Chol: 228 mg/dL | LDL: 148 mg/dL | HDL: 42 mg/dL | Trig: 190 mg/dL';
+      this.labResultForm.referenceRange = 'LDL < 100 mg/dL, HDL > 40 mg/dL';
+      this.labResultForm.abnormalFlag = 'High';
+    }
+    this.isLabResultModalOpen = true;
+    this.showToast(`Lab Technician claimed: ${task.testName} for ${task.patientName}`, 'info');
+  }
+
+  submitLabReport() {
+    if (!this.activeLabExecution) return;
+    const reportData = {
+      reportId: `REP-${Date.now().toString().slice(-4)}`,
+      testName: this.labResultForm.testName,
+      specimen: this.labResultForm.specimen,
+      resultValue: this.labResultForm.resultValue,
+      referenceRange: this.labResultForm.referenceRange,
+      abnormalFlag: this.labResultForm.abnormalFlag,
+      technicianNotes: this.labResultForm.technicianNotes,
+      technician: 'Alex Morgan, MLT (ASCP)',
+      verifiedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isReviewedByDoctor: false
+    };
+
+    this.activeLabExecution.status = 'LAB_COMPLETED';
+    this.activeLabExecution.result = reportData;
+
+    // Attach report to appointment and notify doctor
+    const targetApt = this.appointments.find(a => a.id === this.activeLabExecution.appointmentId);
+    if (targetApt) {
+      if (!targetApt.completedLabReports) targetApt.completedLabReports = [];
+      targetApt.completedLabReports.push(reportData);
+      targetApt.status = 'RETURNED_TO_DOCTOR';
+    }
+
+    this.showToast(`✅ Lab Report for ${this.labResultForm.testName} submitted and attached to patient chart. Doctor alerted!`, 'success');
+    this.isLabResultModalOpen = false;
+    this.activeLabExecution = null;
+  }
+
+  // Doctor Lab Review
+  isDoctorLabReviewModalOpen = false;
+  viewingLabReport: any = null;
+
+  openDoctorLabReview(report: any) {
+    this.viewingLabReport = report;
+    this.isDoctorLabReviewModalOpen = true;
+  }
+
+  markLabReportReviewed() {
+    if (this.viewingLabReport) {
+      this.viewingLabReport.isReviewedByDoctor = true;
+      this.showToast('✅ Lab report marked as reviewed by Dr. Sarah Chen.', 'success');
+      this.isDoctorLabReviewModalOpen = false;
+    }
+  }
+
+  // Medical Case Sheet Generation & Privacy (23-Point Clinical Summary)
+  isCaseSheetModalOpen = false;
+  generatedCaseSheet: any = null;
+
+  generateMedicalCaseSheet() {
+    const p = this.selectedQueuePatient || this.appointments[0];
+    const timestamp = new Date().toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
+    });
+
+    this.generatedCaseSheet = {
+      caseSheetId: `CS-${Date.now().toString().slice(-6)}`,
+      createdAt: timestamp,
+      consultant: 'Dr. Sarah Chen, MD, FACC',
+      consultantNpi: '1098237461',
+      department: p.department || 'Cardiology',
+      patient: {
+        name: p.patientName,
+        mrn: p.mrn,
+        age: p.age,
+        gender: p.gender,
+        dob: '1964-04-12',
+        allergies: 'No known drug allergies (NKDA)'
+      },
+      encounter: {
+        appointmentId: p.appointmentId || p.id,
+        encounterType: 'Outpatient Specialist Consultation',
+        room: 'Cardiology Clinic - Room 4B'
+      },
+      chiefComplaint: p.chiefComplaint || 'Exertional chest tightness',
+      historyOfPresentIllness: this.soapNote.subjective?.historyOfPresentIllness || 'Patient describes 2-3 weeks of exertional substernal pressure and mild shortness of breath occurring with moderate exertion.',
+      pastMedicalHistory: 'Essential Hypertension (10 years), Hyperlipidemia (6 years), Mild Osteoarthritis.',
+      pastSurgicalHistory: 'Appendectomy (1998), Right Knee Arthroscopy (2015).',
+      medicationHistory: 'Amlodipine 5mg Daily, Hydrochlorothiazide 25mg Daily.',
+      allergyInfo: 'No known drug or environmental allergies.',
+      vitals: p.vitals || { bp: '142/88', hr: 102, spo2: 95, temp: 38.4, rr: 21, height: 178, weight: 84 },
+      physicalFindings: this.soapNote.objective?.physicalExam || 'Alert, oriented x3. Mild diaphoresis. Regular heart rate and rhythm. S1/S2 present, no murmurs. Lungs clear to auscultation bilaterally.',
+      investigationsOrdered: (p.labOrders || []).map((o: any) => o.testName).join(', ') || '12-Lead ECG, High-Sensitivity Troponin I, Lipid Panel',
+      labResults: (p.completedLabReports || []).map((r: any) => `${r.testName}: ${r.resultValue} (${r.abnormalFlag})`).join('\n') || 'Troponin I: 0.02 ng/mL (Normal) | 12-Lead ECG: Normal Sinus Rhythm',
+      soap: {
+        subjective: this.soapNote.subjective,
+        objective: this.soapNote.objective,
+        assessment: this.soapNote.assessment,
+        plan: this.soapNote.plan
+      },
+      finalDiagnosis: this.soapNote.assessment?.primaryDiagnosis || 'Exertional Angina Pectoris / Suspected CAD (ICD-10: I20.9)',
+      prescription: this.parseMedications(this.soapNote.plan),
+      plan: this.soapNote.plan?.diagnostics || 'Initiate medical therapy with Aspirin and High-Intensity Statin. Outpatient stress test scheduled.',
+      followUp: 'Return in 4 weeks or immediately if symptoms worsen or occur at rest.',
+      isRestrictedToConsultant: true
+    };
+
+    this.isCaseSheetModalOpen = true;
+    this.showToast('✅ Medical Case Sheet successfully generated and restricted to Consultant view.', 'success');
+  }
+
+  finalizeAndCompleteEncounter() {
+    if (this.selectedQueuePatient) {
+      this.selectedQueuePatient.status = 'COMPLETED';
+      this.selectedQueuePatient.caseSheet = this.generatedCaseSheet;
+    }
+    this.isCaseSheetModalOpen = false;
+    this.showToast('🎉 Clinical encounter completed and archived! Patient record updated.', 'success');
+    this.doctorView = 'landing';
+    this.selectedQueuePatient = null;
+  }
 
   fillCredentials(email: string, pass: string = 'password123') {
     this.loginEmail = email;
@@ -132,6 +1485,53 @@ export class AppComponent {
   // Modal state for chart and summary views
   viewingChartNote: any = null;
   viewingSummaryNote: any = null;
+
+  // Administration Operational Role State (St. Luke Medical Centre)
+  activeOperationalRole: string = 'Doctor';
+  adminSearchQuery: string = '';
+  isCopilotOpen: boolean = false;
+  showNotifications: boolean = false;
+
+  operationalRoles = [
+    { id: 'Reception', label: 'Reception', icon: 'reception' },
+    { id: 'Nurse', label: 'Nurse', icon: 'nurse' },
+    { id: 'Doctor', label: 'Doctor', icon: 'doctor' },
+    { id: 'Lab Technician', label: 'Lab Technician', icon: 'lab' },
+    { id: 'Pharmacy', label: 'Pharmacy', icon: 'pharmacy' },
+    { id: 'Patient', label: 'Patient Portal', icon: 'patient' },
+    { id: 'Admin & Operations', label: 'Admin & Operations', icon: 'admin' }
+  ];
+
+  selectOperationalRole(roleId: string) {
+    this.activeOperationalRole = roleId;
+    if (roleId === 'Doctor') {
+      this.loginRole = 'Doctor';
+      this.doctorView = 'landing';
+    } else if (roleId === 'Nurse') {
+      this.loginRole = 'Nurse';
+    } else if (roleId === 'Reception') {
+      this.loginRole = 'Reception';
+    } else if (roleId === 'Lab Technician') {
+      this.loginRole = 'Lab Technician';
+    } else if (roleId === 'Pharmacy') {
+      this.loginRole = 'Pharmacist';
+      this.loadPharmacistData();
+    } else if (roleId === 'Patient') {
+      this.loginRole = 'Patient';
+      this.loadPharmacistData();
+    } else if (roleId === 'Admin & Operations') {
+      this.loginRole = 'Administrator';
+    }
+    this.showToast(`Switched operational view to: ${roleId}`, 'info');
+  }
+
+  toggleCopilot() {
+    this.isCopilotOpen = !this.isCopilotOpen;
+  }
+
+  toggleNotifications() {
+    this.showNotifications = !this.showNotifications;
+  }
 
   // Mock Inventory Data
   inventoryData = [
@@ -410,20 +1810,42 @@ export class AppComponent {
   handleLogin(e: Event) {
     e.preventDefault();
     const email = this.loginEmail.toLowerCase();
-    if (email === 'dr.sarah@scribe.ai' || email === 'admin@scribe.ai' || email === 'nurse@scribe.ai' || email === 'pharmacist@scribe.ai' || email === 'patient@scribe.ai') {
+    if (email === 'dr.sarah@scribe.ai' || email === 'admin@scribe.ai' || email === 'nurse@scribe.ai' || email === 'pharmacist@scribe.ai' || email === 'patient@scribe.ai' || email === 'reception@scribe.ai' || email === 'lab@scribe.ai') {
       this.isLoggedIn = true;
       this.loginError = false;
-      if (email.includes('admin')) this.loginRole = 'Administrator';
-      else if (email.includes('nurse')) this.loginRole = 'Nurse';
-      else if (email.includes('pharmacist')) {
+      if (email.includes('admin')) {
+        this.loginRole = 'Administrator';
+        this.authenticatedRole = 'Administrator';
+        this.isAdminSession = true;
+        this.activeOperationalRole = 'Admin & Operations';
+      } else if (email.includes('nurse')) {
+        this.loginRole = 'Nurse';
+        this.authenticatedRole = 'Nurse';
+        this.isAdminSession = false;
+      } else if (email.includes('reception')) {
+        this.loginRole = 'Reception';
+        this.authenticatedRole = 'Reception';
+        this.isAdminSession = false;
+      } else if (email.includes('lab')) {
+        this.loginRole = 'Lab Technician';
+        this.authenticatedRole = 'Lab Technician';
+        this.isAdminSession = false;
+      } else if (email.includes('pharmacist')) {
         this.loginRole = 'Pharmacist';
+        this.authenticatedRole = 'Pharmacist';
+        this.isAdminSession = false;
         this.loadPharmacistData();
-      }
-      else if (email.includes('patient')) {
+      } else if (email.includes('patient')) {
         this.loginRole = 'Patient';
+        this.authenticatedRole = 'Patient';
+        this.isAdminSession = false;
         this.loadPharmacistData();
+      } else {
+        this.loginRole = 'Doctor';
+        this.authenticatedRole = 'Doctor';
+        this.isAdminSession = false;
+        this.doctorView = 'landing';
       }
-      else this.loginRole = 'Doctor';
     } else {
       this.loginError = true;
     }
@@ -433,6 +1855,11 @@ export class AppComponent {
     if (this.pollInterval) clearInterval(this.pollInterval);
 
     this.isLoggedIn = false;
+    this.isAdminSession = false;
+    this.authenticatedRole = 'Doctor';
+    this.loginRole = 'Doctor';
+    this.doctorView = 'landing';
+    this.activeOperationalRole = 'Admin & Operations';
     this.loginEmail = 'dr.sarah@scribe.ai';
     this.loginPassword = 'password123';
     this.pharmacistView = 'queue';
@@ -512,6 +1939,10 @@ export class AppComponent {
   private recognition: any = null;
 
   constructor() {
+    this.encounters.forEach(e => {
+      e.utterances = [];
+      e.entities = [];
+    });
     this.initSpeechRecognition();
   }
 

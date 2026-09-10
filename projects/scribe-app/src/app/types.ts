@@ -87,3 +87,36 @@ export interface ClinicalEncounter {
   entities: MedicalEntity[];
   soap: SoapNote;
 }
+
+export interface HistoricalReport {
+  id: string;
+  encounterDate: string;
+  department: string;
+  doctorName: string;
+  chiefComplaint: string;
+  diagnosis: string;
+  icdCode: string;
+  vitals: { bp: string; hr: number; spo2: number; temp: number; rr?: number; pain?: number };
+  soap: {
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+  };
+  labResults?: Array<{ testName: string; value: string; unit: string; reference: string; status: 'NORMAL' | 'HIGH' | 'CRITICAL' | 'BORDERLINE' }>;
+  medications?: string[];
+  dischargeNotes?: string;
+}
+
+export interface PatientHistoryRecord {
+  mrn: string;
+  patientName: string;
+  age: number;
+  gender: string;
+  dob: string;
+  allergies: string[];
+  currentMeds: string;
+  visitsCount: number;
+  lastVisitDate: string;
+  reports: HistoricalReport[];
+}
