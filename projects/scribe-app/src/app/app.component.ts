@@ -1941,17 +1941,22 @@ export class AppComponent {
     }
     this.registrationError = '';
     this.registrationStep = 'consent';
+    this.termsScrolledToBottom = false;
   }
 
   onTermsScroll(event: any) {
     const el = event.target;
-    if (el.scrollHeight - el.scrollTop <= el.clientHeight + 50) {
+    if (el.scrollHeight - el.scrollTop <= el.clientHeight + 30) {
       this.termsScrolledToBottom = true;
     }
   }
 
   async submitPatientRegistration(e?: Event) {
     if (e) e.preventDefault();
+    if (!this.termsScrolledToBottom) {
+      this.registrationError = 'Federal law requires reviewing and scrolling through the entire Statutory Codex (Articles I–XIV) before accepting.';
+      return;
+    }
     if (!this.regForm.consentHipaa || !this.regForm.consentAmbientAi || !this.regForm.consentCuresAct || !this.regForm.consentEpcs) {
       this.registrationError = 'Federal law requires acknowledging all statutory consent checkboxes.';
       return;

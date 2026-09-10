@@ -2607,53 +2607,247 @@
               </div>
 
               <!-- Scrollable Terms & Conditions Codex Window -->
-              <div class="border border-slate-200 rounded-lg bg-slate-50 p-3 max-h-56 overflow-y-auto text-[11px] text-slate-700 space-y-3 font-sans shadow-inner"
+              <div class="border border-slate-300 rounded-lg bg-slate-50 p-3.5 max-h-60 overflow-y-auto text-[11px] text-slate-700 space-y-3 font-sans shadow-inner leading-relaxed select-text"
                    (scroll)="onTermsScroll($event)">
-                <div class="font-bold text-slate-900 uppercase tracking-wide text-[10px] border-b pb-1">
-                  OMNISCRIBE HEALTH — NOTICE OF PRIVACY PRACTICES & AMBIENT AI CONSENT (VER 2026.4)
+                <div class="font-bold text-slate-900 uppercase tracking-wide text-[10px] border-b border-slate-300 pb-1.5 mb-2 flex items-center justify-between sticky top-0 bg-slate-50 py-1 z-10">
+                  <span>OMNISCRIBE HEALTH — STATUTORY COMPLIANCE & AI CODEX</span>
+                  <span class="text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono">VER 2026.4-US-FED</span>
                 </div>
-                <p><strong>ARTICLE I — HIPAA NOTICE OF PRIVACY PRACTICES (45 CFR § 164.520):</strong> We collect, store, and transmit your Electronic Protected Health Information (ePHI) solely for Treatment, Payment, and Health Care Operations (TPO). Your records are encrypted with AES-256 at rest and TLS 1.3 in transit.</p>
-                <p><strong>ARTICLE II — AMBIENT AI MEDICAL SCRIBING CONSENT (FDA SaMD):</strong> You grant informed consent for the use of ambient acoustic speech recognition (Google Gemini Clinical Scribe) during consultations. AI operates strictly as an administrative drafting assistant; no autonomous diagnosis is issued without licensed physician review and signature (Human-in-the-Loop).</p>
-                <p><strong>ARTICLE III — 21ST CENTURY CURES ACT & ONC INFORMATION BLOCKING:</strong> You retain an absolute federal right to immediate electronic access to your medical notes and prescriptions in standardized HL7® FHIR® R4 format without obstruction.</p>
-                <p><strong>ARTICLE IV — ELECTRONIC PRESCRIBING & TAMPER PREVENTION (DEA EPCS):</strong> Prescription orders formulated in the Plan section are routed securely to licensed pharmacy fulfillment queues. Digital PDF prescriptions are rasterized as flattened image layers to prevent digital alteration or fraud.</p>
-                <p><strong>ARTICLE V — ZERO-KNOWLEDGE PRINCIPLE & AUDIT LOGS:</strong> Every query and read operation is permanently recorded in a write-once tamper-evident audit ledger with IP address, device fingerprint, and timestamp.</p>
+
+                <!-- ARTICLE I -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE I: STATUTORY DEFINITIONS & LEGAL FRAMEWORK</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 1.01 — Defined Legal Terms</div>
+                  <p>For the purposes of this legally binding agreement (hereinafter, the "Codex"), the following capitalised terms shall possess the respective definitions established under federal regulations:</p>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>"Business Associate"</strong> shall adhere to the definition codified under 45 CFR § 160.103, referring to OmniScribe Health Technologies, LLC, its infrastructure providers, cloud infrastructure subcontractors, and algorithmic inference systems.</li>
+                    <li><strong>"Covered Entity"</strong> shall adhere to 45 CFR § 160.103, including participating medical practitioners, hospital alliances, outpatient clinical facilities, and clinical workforce members operating under an active National Provider Identifier (NPI).</li>
+                    <li><strong>"Electronic Protected Health Information" ("ePHI")</strong> shall mean any individually identifiable health information transmitted by or maintained in electronic media, as delimited under 45 CFR § 160.103.</li>
+                    <li><strong>"Designated Record Set" ("DRS")</strong> shall possess the meaning established in 45 CFR § 164.501, incorporating medical records, billing records, AI-transcribed ambient notes, clinical SOAP artifacts, diagnostic orders, and pharmacy transmission payloads.</li>
+                    <li><strong>"Ambient Clinical Intelligence" ("ACI")</strong> refers to machine learning algorithms, natural language processing (NLP) pipelines, edge-computing acoustic models, and generative deep learning architectures (including Google Gemini Clinical Foundation Models) utilized to transcode conversational acoustic signals into structured clinical documentation.</li>
+                    <li><strong>"HL7® FHIR® R4"</strong> refers to Fast Healthcare Interoperability Resources, Release 4, as defined by Health Level Seven International and mandated under ONC 45 CFR § 170.215.</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE II -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE II: HIPAA NOTICE OF PRIVACY PRACTICES (45 CFR § 164.520)</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 2.01 — Mandatory Federal Privacy Notification</div>
+                  <p class="font-medium text-slate-800 bg-amber-50 p-2 rounded border border-amber-200">
+                    THIS NOTICE DESCRIBES HOW MEDICAL INFORMATION ABOUT YOU MAY BE USED AND DISCLOSED AND HOW YOU CAN GET ACCESS TO THIS INFORMATION. PLEASE REVIEW IT CAREFULLY.
+                  </p>
+                  <p>Under the Health Insurance Portability and Accountability Act of 1996 (HIPAA) and the Health Information Technology for Economic and Clinical Health (HITECH) Act, OmniScribe Health and its participating clinical partners are strictly required by federal law to maintain the privacy of your ePHI, to provide you with this comprehensive Notice of Privacy Practices, and to abide by the terms of this Notice currently in effect.</p>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 2.02 — Privacy Fiduciary Obligations</div>
+                  <p>OmniScribe Health acts as an automated, cryptographically secured custodian and Business Associate. We do not sell, rent, commercialize, or monetize patient data. Your individual medical record is protected under federal civil and criminal statutory provisions (including 42 U.S.C. § 1320d-6), carrying substantial federal monetary penalties and imprisonment for unauthorized disclosure.</p>
+                </div>
+
+                <!-- ARTICLE III -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE III: USES & DISCLOSURES OF PROTECTED HEALTH INFORMATION (PHI)</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 3.01 — Permissible Disclosures for Treatment, Payment, and Health Care Operations (TPO)</div>
+                  <p>Without requiring separate individual transactional authorization, OmniScribe Health may process your ePHI under the statutory exceptions delineated below:</p>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>(a) For Treatment (45 CFR § 164.506(c)(1)):</strong> Disclosures to your primary care physicians, consulting specialists, licensed nurses, pharmacists, and medical scribes participating in your care network.</li>
+                    <li><strong>(b) For Payment (45 CFR § 164.506(c)(2)):</strong> Transmission of diagnostic ICD-10 and CPT coding artifacts derived from AI-generated SOAP notes to commercial health insurers, Medicare, Medicaid, or health billing clearinghouses.</li>
+                    <li><strong>(c) For Health Care Operations (45 CFR § 164.506(c)(4)):</strong> Conducting internal clinical quality assessments, clinical auditing, software safety monitoring, and verifying compliance with FDA SaMD (Software as a Medical Device) guidelines.</li>
+                  </ul>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 3.02 — Strict Prohibition on Unauthorised Disclosures</div>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>Marketing & Advertising Prohibition:</strong> Your personal identifiers, diagnosis summaries, and medication lists will NEVER be disclosed to pharmaceutical advertisers, data brokers, or marketing networks.</li>
+                    <li><strong>Prohibition on Secondary AI Model Pre-Training:</strong> OmniScribe Health maintains strict contractual isolation agreements with LLM API providers (including Google Vertex AI / Gemini Infrastructure). Your clinical dialogue streams, audio utterances, and demographic records are mathematically quarantined and never ingested into public or commercial training corpuses.</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE IV -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE IV: STATUTORY CONSENT FOR AMBIENT CLINICAL ARTIFICIAL INTELLIGENCE & LLM PROCESSING</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 4.01 — Express Informed Consent for Ambient Audio Capture</div>
+                  <p>By executing this agreement, you grant explicit, informed, and continuous consent for the deployment of edge-computing acoustic recording devices (such as browser-based Web Speech API microphones, digital ambient room arrays, or workstation audio capture) during all medical encounters conducted within this portal.</p>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 4.02 — Algorithmic Processing & Clinical Decomposition</div>
+                  <p>You acknowledge and understand that:</p>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>Acoustic Transcoding:</strong> Spoken verbal interactions between you and the healthcare provider are digitized and converted into phoneme arrays and textual transcripts.</li>
+                    <li><strong>LLM Synthesis:</strong> Natural language processing models analyze conversational transcripts to automatically segment data into the universal clinical schema:
+                      <div class="pl-2 pt-1 space-y-0.5 text-slate-500 font-mono text-[10px]">
+                        • <strong>Subjective:</strong> Chief complaint, History of Present Illness (HPI), Review of Systems (ROS).<br>
+                        • <strong>Objective:</strong> Physical examination observations, vital signs, lab diagnostics.<br>
+                        • <strong>Assessment:</strong> Differential diagnoses, clinical rationale, primary ICD codes.<br>
+                        • <strong>Plan:</strong> Pharmacotherapy prescriptions, specialist referrals, patient counseling, and follow-up schedules.
+                      </div>
+                    </li>
+                  </ul>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 4.03 — The "Human-in-the-Loop" Mandatory Safe Harbor</div>
+                  <p>In accordance with FDA Digital Health Policy and the American Medical Association (AMA) Ethical Guidelines for Augmented Intelligence:</p>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>NO AUTONOMOUS DIAGNOSIS:</strong> The AI scribe operates strictly as an administrative drafting assistant. The software is mathematically incapable of issuing autonomous medical decisions, executing unilateral surgical determinations, or dispensing medications.</li>
+                    <li><strong>PHYSICIAN SUPERVISION & ATTESTATION:</strong> Every line of the generated medical record is held in a provisional staging environment until a licensed physician conducts an independent review, makes necessary modifications, and appends a cryptographically sealed digital signature accompanied by their verified NPI credential.</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE V -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE V: 21ST CENTURY CURES ACT & ONC INFORMATION BLOCKING RULE COMPLIANCE (45 CFR PART 171)</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 5.01 — Non-Blocking Statutory Mandate</div>
+                  <p>Pursuant to Section 4004 of the 21st Century Cures Act, OmniScribe Health strictly adheres to the Office of the National Coordinator (ONC) Information Blocking regulations. We do not engage in any practice that is likely to interfere with, prevent, or materially discourage access, exchange, or use of electronic health information.</p>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 5.02 — Real-Time FHIR R4 Core Interoperability</div>
+                  <p><strong>Automated Bundle Generation:</strong> The portal maintains active microservices conforming to the US Core Implementation Guide for FHIR R4.</p>
+                  <p><strong>Unrestricted Export:</strong> You have an absolute federal right to download, inspect, and transmit your medical record as an internationally standardized HL7 FHIR JSON bundle containing:</p>
+                  <ul class="list-disc pl-4 space-y-0.5 text-slate-600 font-mono text-[10px]">
+                    <li>Patient Resource (Demographics, MRN)</li>
+                    <li>Practitioner Resource (Attending Physician NPI)</li>
+                    <li>Encounter Resource (Encounter metadata, clinical timeline)</li>
+                    <li>Condition Resource (Diagnoses mapped to SNOMED-CT and ICD-10-CM)</li>
+                    <li>MedicationRequest Resource (Active Rx orders mapped to RxNorm)</li>
+                    <li>Observation Resource (Vitals, LOINC-coded lab metrics)</li>
+                    <li>Composition Resource (The complete attested document wrapper)</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE VI -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE VI: TELEHEALTH, REMOTE CLINICAL COMMUNICATIONS, & TELEMEDICINE ATTESTATION</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 6.01 — Telemedicine Informed Acknowledgment</div>
+                  <p>If accessing care remotely via this electronic portal:</p>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>Equivalency Limitation:</strong> You understand that virtual telehealth consultations may not fully substitute for in-person physical examinations where palpatory diagnostics, auscultation, or urgent procedural interventions are clinically indicated.</li>
+                    <li><strong>Technological Vulnerabilities:</strong> While end-to-end TLS 1.3 cryptographic protocols are enforced, you accept the minimal inherent risk associated with Internet-based telecommunications, including packet latency, audio distortion, or network drops.</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE VII -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE VII: ELECTRONIC PRESCRIBING OF CONTROLLED SUBSTANCES (EPCS) & PHARMACEUTICAL ROUTING</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 7.01 — Pharmacy Routing & Anti-Diversion Architecture</div>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>Direct Pharmacy Integration:</strong> Prescriptions formulated within this portal are transmitted via automated messaging queues to licensed dispensing pharmacies.</li>
+                    <li><strong>Prescription Fraud Prevention:</strong> All printable patient prescription documents generated within this portal are dynamically rasterized via canvas rendering engines (html2canvas) into flattened bitmap image layers. This technical measure renders the underlying digital text mathematically uneditable, eliminating the risk of unauthorized drug alteration, dosage tampering, or prescription forgery under 21 CFR Part 1311 (DEA EPCS Rule).</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE VIII -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE VIII: SECURITY RULE SAFEGUARDS & TECHNICAL ARCHITECTURE (45 CFR PART 164, SUBPART C)</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 8.01 — Comprehensive Technical Safeguards</div>
+                  <p>OmniScribe Health maintains an audited Information Security Management System adhering to NIST SP 800-53 and ISO 27001 standards:</p>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>Data at Rest:</strong> All relational databases (PostgreSQL/Supabase) and blob storage buckets enforce AES-256 (FIPS 140-2 validated) hardware-level encryption.</li>
+                    <li><strong>Data in Transit:</strong> All client-to-server and microservice-to-microservice traffic is strictly routed over Transport Layer Security (TLS 1.3) with perfect forward secrecy.</li>
+                    <li><strong>Row-Level Security (RLS):</strong> Database transactions are isolated by strict tenant-isolation policies, mathematically preventing any user, pharmacist, or administrator from querying or mutating records outside their explicit security context.</li>
+                    <li><strong>Zero-Trust Access Control:</strong> Multi-factor authentication (MFA), role-based privilege attenuation (Least Privilege Principle), and ephemeral JWT authentication tokens are mandatory for all system actors.</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE IX -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE IX: BREACH NOTIFICATION OBLIGATIONS UNDER THE HITECH ACT (45 CFR §§ 164.400–414)</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 9.01 — Statutory Breach Protocol</div>
+                  <p>In the event of an unauthorized acquisition, access, use, or disclosure of unencrypted ePHI that compromises the security or privacy of your data:</p>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>Timely Notification:</strong> OmniScribe Health shall notify you without unreasonable delay, and in no case later than sixty (60) calendar days following the discovery of the breach.</li>
+                    <li><strong>Remediation & Reporting:</strong> Written notice shall detail the nature of the breach, the specific data elements compromised, steps taken to mitigate harm, and instructions for identity monitoring. Simultaneous notification shall be submitted to the Secretary of HHS and published on the OCR Breach Portal.</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE X -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE X: PATIENT STATUTORY RIGHTS UNDER FEDERAL LAW</div>
+                  <p>As an authorized user of this portal, you possess the following inviolable legal rights:</p>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>Right of Access (45 CFR § 164.524):</strong> The right to inspect and obtain a digital copy of your entire Designated Record Set in human-readable (PDF) or machine-readable (FHIR JSON) format.</li>
+                    <li><strong>Right to Amend (45 CFR § 164.526):</strong> The right to request formal amendments to clinical inaccuracies or omitted medical history within sixty (60) days of review.</li>
+                    <li><strong>Right to an Accounting of Disclosures (45 CFR § 164.528):</strong> The right to receive a comprehensive audit ledger documenting all non-TPO disclosures made by the platform over the prior six (6) years.</li>
+                    <li><strong>Right to Request Restrictions (45 CFR § 164.522):</strong> The right to request limitations on specific uses of your medical information for health plan operations if you have paid out-of-pocket in full for the underlying clinical encounter.</li>
+                    <li><strong>Right to Revoke Authorization:</strong> The right to terminate portal access and revoke AI ambient consent at any time by updating your account settings or submitting formal written notice.</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE XI -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE XI: MEDICAL EMERGENCY DISCLAIMER & LIMITATION OF LIABILITY</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 11.01 — DO NOT USE FOR EMERGENCIES</div>
+                  <p class="font-semibold text-rose-800 bg-rose-50 p-2 rounded border border-rose-200">
+                    THIS ELECTRONIC PORTAL, ITS MESSAGING CHANNELS, AND ITS AMBIENT AI FEATURES ARE NOT DESIGNED OR INTENDED FOR MEDICAL EMERGENCIES. IF YOU ARE EXPERIENCING A LIFE-THREATENING CONDITION, SEVERE CHEST PAIN, SHORTNESS OF BREATH, OR SUDDEN NEUROLOGICAL SYMPTOMS, CALL 911 OR PROCEED IMMEDIATELY TO THE NEAREST HOSPITAL EMERGENCY DEPARTMENT.
+                  </p>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 11.02 — Standard of Care Disclaimer</div>
+                  <p>The algorithmic tools provided by OmniScribe Health do not establish an independent physician-patient relationship between OmniScribe Health Technologies and you. The legal and professional standard of care remains exclusively with your licensed attending medical practitioner.</p>
+                </div>
+
+                <!-- ARTICLE XII -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE XII: INTELLECTUAL PROPERTY & DATA SOVEREIGNTY</div>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-600">
+                    <li><strong>Patient Data Sovereignty:</strong> You retain all equitable and statutory ownership rights in your individually identifiable health information.</li>
+                    <li><strong>Platform Proprietary Rights:</strong> The underlying source code, microservices architecture, FHIR mapping algorithms, user interface layouts, and domain trademarks remain the exclusive intellectual property of OmniScribe Health Technologies, protected under Title 17 of the United States Code.</li>
+                  </ul>
+                </div>
+
+                <!-- ARTICLE XIII -->
+                <div class="space-y-1.5 pb-2 border-b border-slate-200">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE XIII: BINDING DISPUTE RESOLUTION & ARBITRATION AGREEMENT</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 13.01 — Mandatory Arbitration</div>
+                  <p>Any controversy, dispute, or claim arising out of or relating to this agreement, the breach thereof, or your use of the OmniScribe portal shall be settled by binding arbitration administered by the American Health Law Association (AHLA) Dispute Resolution Service in accordance with its Rules of Procedure.</p>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 13.02 — Class Action Waiver</div>
+                  <p class="font-semibold text-slate-800">YOU EXPRESSLY AGREE THAT ALL DISPUTES MUST BE RESOLVED ON AN INDIVIDUAL BASIS. YOU VOLUNTARILY WAIVE ANY RIGHT TO COMMENCE OR PARTICIPATE IN ANY CLASS ACTION, COLLECTIVE ACTION, OR REPRESENTATIVE PROCEEDING AGAINST OMNISCRIBE HEALTH.</p>
+                </div>
+
+                <!-- ARTICLE XIV -->
+                <div class="space-y-1.5 pb-2">
+                  <div class="font-bold text-slate-900 uppercase text-[11px]">ARTICLE XIV: EXECUTED DIGITAL ATTESTATION & CRYPTOGRAPHIC VERIFICATION</div>
+                  <div class="font-semibold text-slate-800 text-[10.5px]">Section 14.01 — Electronic Signatures in Global and National Commerce (E-SIGN) Act</div>
+                  <p>Pursuant to 15 U.S.C. § 7001 (The Federal E-SIGN Act) and the Uniform Electronic Transactions Act (UETA), your electronic signature executed below carries the identical legal force, validity, and enforceability as a handwritten wet-ink signature.</p>
+                  <div class="bg-blue-50 border border-blue-200 rounded p-2 text-blue-900 font-medium text-[10.5px]">
+                    ✓ End of Statutory Document (Article XIV reached). Please review and complete the attestation checkboxes below.
+                  </div>
+                </div>
               </div>
               
-              <div class="flex items-center justify-between text-[10px] text-slate-500 px-1">
-                <span>Scroll window to inspect all clauses</span>
-                <span *ngIf="termsScrolledToBottom" class="text-emerald-600 font-bold">✓ Codex Reviewed</span>
+              <!-- Scroll Progress & Status Bar -->
+              <div *ngIf="!termsScrolledToBottom" class="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-[11px] text-amber-800 flex items-center justify-between shadow-xs">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">📜</span>
+                  <span><strong>Scroll to unlock:</strong> Please scroll through the entire Statutory Codex above (Articles I to XIV) to unlock acceptance checkboxes.</span>
+                </div>
+                <span class="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded uppercase tracking-wider shrink-0">Locked</span>
               </div>
 
-              <!-- Attestation Checkboxes -->
-              <div class="space-y-2.5 pt-2 border-t border-slate-100">
-                <label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
-                  <input type="checkbox" [(ngModel)]="regForm.consentHipaa" class="mt-0.5 rounded text-blue-600" />
-                  <span><strong>HIPAA Consent:</strong> I acknowledge receipt of the Notice of Privacy Practices and consent to ePHI processing under 45 CFR § 164.520.</span>
+              <div *ngIf="termsScrolledToBottom" class="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-[11px] text-emerald-800 flex items-center justify-between shadow-xs">
+                <div class="flex items-center gap-2">
+                  <span class="text-emerald-600 font-bold text-sm">✓</span>
+                  <span><strong>Codex Fully Reviewed (Articles I–XIV):</strong> You may now acknowledge all statutory checkboxes and sign.</span>
+                </div>
+                <span class="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2 py-0.5 rounded uppercase tracking-wider shrink-0">Unlocked</span>
+              </div>
+
+              <!-- Attestation Checkboxes (Gated on Scroll) -->
+              <div class="space-y-2.5 pt-2 border-t border-slate-100" [ngClass]="termsScrolledToBottom ? '' : 'opacity-40 pointer-events-none'">
+                <label class="flex items-start gap-2 text-xs" [ngClass]="termsScrolledToBottom ? 'text-slate-700 cursor-pointer' : 'text-slate-400 cursor-not-allowed'">
+                  <input type="checkbox" [disabled]="!termsScrolledToBottom" [(ngModel)]="regForm.consentHipaa" class="mt-0.5 rounded text-blue-600" />
+                  <span><strong>HIPAA & Privacy Consent (45 CFR § 164.520):</strong> I have read, understood, and received the Notice of Privacy Practices (NPP). I hereby grant authorization for the collection, electronic transmission, and storage of my Protected Health Information (ePHI) in compliance with 45 CFR § 164.520.</span>
                 </label>
 
-                <label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
-                  <input type="checkbox" [(ngModel)]="regForm.consentAmbientAi" class="mt-0.5 rounded text-blue-600" />
-                  <span><strong>Ambient AI Scribe:</strong> I grant informed statutory consent for speech-to-text AI transcription subject to mandatory physician signoff.</span>
+                <label class="flex items-start gap-2 text-xs" [ngClass]="termsScrolledToBottom ? 'text-slate-700 cursor-pointer' : 'text-slate-400 cursor-not-allowed'">
+                  <input type="checkbox" [disabled]="!termsScrolledToBottom" [(ngModel)]="regForm.consentAmbientAi" class="mt-0.5 rounded text-blue-600" />
+                  <span><strong>Ambient Artificial Intelligence Consent:</strong> I provide informed statutory consent for the operation of Ambient AI speech processing (Google Gemini Clinical Scribe) during my consultations, with the explicit understanding that a licensed physician must review, attest, and sign all documentation.</span>
                 </label>
 
-                <label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
-                  <input type="checkbox" [(ngModel)]="regForm.consentCuresAct" class="mt-0.5 rounded text-blue-600" />
-                  <span><strong>21st Century Cures Act:</strong> I acknowledge my federal rights to real-time HL7 FHIR electronic health record access.</span>
+                <label class="flex items-start gap-2 text-xs" [ngClass]="termsScrolledToBottom ? 'text-slate-700 cursor-pointer' : 'text-slate-400 cursor-not-allowed'">
+                  <input type="checkbox" [disabled]="!termsScrolledToBottom" [(ngModel)]="regForm.consentCuresAct" class="mt-0.5 rounded text-blue-600" />
+                  <span><strong>21st Century Cures Act & Terms Agreement:</strong> I understand my federal health record access rights under the 21st Century Cures Act and expressly agree to be bound by the Master Terms of Use, Arbitration Agreement, and EPCS Prescription Policies.</span>
                 </label>
 
-                <label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer">
-                  <input type="checkbox" [(ngModel)]="regForm.consentEpcs" class="mt-0.5 rounded text-blue-600" />
-                  <span><strong>Prescription Routing:</strong> I authorize electronic prescription transmission to licensed pharmacy fulfillment queues.</span>
+                <label class="flex items-start gap-2 text-xs" [ngClass]="termsScrolledToBottom ? 'text-slate-700 cursor-pointer' : 'text-slate-400 cursor-not-allowed'">
+                  <input type="checkbox" [disabled]="!termsScrolledToBottom" [(ngModel)]="regForm.consentEpcs" class="mt-0.5 rounded text-blue-600" />
+                  <span><strong>Electronic Prescriptions & EPCS (DEA 21 CFR Part 1311):</strong> I authorize electronic transmission of prescriptions to licensed pharmacies and acknowledge anti-tamper rasterized image safeguards.</span>
                 </label>
               </div>
 
               <!-- Digital Signature (E-SIGN Act 15 U.S.C. § 7001) -->
-              <div class="space-y-1.5 pt-3 border-t border-slate-100">
+              <div class="space-y-1.5 pt-3 border-t border-slate-100" [ngClass]="termsScrolledToBottom ? '' : 'opacity-40'">
                 <div class="flex items-center justify-between">
                   <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">Electronic Signature (Type Legal Name) *</label>
                   <span class="text-[10px] font-mono text-slate-400">E-SIGN Act 15 U.S.C. § 7001</span>
                 </div>
-                <input type="text" [(ngModel)]="regForm.typedSignature" [placeholder]="'Type exactly: ' + regForm.fullName" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 font-serif italic focus:outline-none focus:border-blue-500" required />
+                <input type="text" [disabled]="!termsScrolledToBottom" [(ngModel)]="regForm.typedSignature" [placeholder]="'Type exactly: ' + regForm.fullName" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 font-serif italic focus:outline-none focus:border-blue-500" [ngClass]="termsScrolledToBottom ? 'bg-white' : 'bg-slate-100 cursor-not-allowed'" required />
                 <p class="text-[10px] text-slate-500">By typing your name, you execute a legally binding digital signature attested with network timestamp and client fingerprint.</p>
               </div>
 
@@ -2661,7 +2855,10 @@
                 <button (click)="registrationStep = 'details'" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-lg text-xs transition-colors cursor-pointer">
                   Back
                 </button>
-                <button (click)="submitPatientRegistration($event)" class="w-2/3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg shadow-sm text-xs transition-colors cursor-pointer">
+                <button (click)="submitPatientRegistration($event)" 
+                        [disabled]="!termsScrolledToBottom || !regForm.consentHipaa || !regForm.consentAmbientAi || !regForm.consentCuresAct || !regForm.consentEpcs || !regForm.typedSignature"
+                        [ngClass]="(!termsScrolledToBottom || !regForm.consentHipaa || !regForm.consentAmbientAi || !regForm.consentCuresAct || !regForm.consentEpcs || !regForm.typedSignature) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'"
+                        class="w-2/3 font-bold py-2.5 rounded-lg shadow-sm text-xs transition-colors">
                   Attest & Create Patient Account
                 </button>
               </div>
