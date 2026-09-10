@@ -2542,7 +2542,7 @@
                       [ngClass]="registrationStep === 'confirmation' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'">
                   3
                 </span>
-                <span class="text-[11px] font-semibold text-slate-700">Audit Proof</span>
+                <span class="text-[11px] font-semibold text-slate-700">Confirmation</span>
               </div>
             </div>
 
@@ -2864,33 +2864,53 @@
               </div>
             </div>
 
-            <!-- STEP 3: AUDIT PROOF & CONFIRMATION -->
+            <!-- STEP 3: REGISTRATION & CONSENT CONFIRMATION -->
             <div *ngIf="registrationStep === 'confirmation'" class="space-y-4">
-              <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
-                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg mx-auto mb-2">
+              <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center">
+                <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xl mx-auto mb-3 shadow-xs">
                   ✓
                 </div>
-                <h3 class="text-sm font-bold text-emerald-900">Statutory Consent Legally Executed</h3>
-                <p class="text-xs text-emerald-700 mt-1">Patient account established with binding E-SIGN attestation record.</p>
+                <h3 class="text-base font-bold text-emerald-900">Registration Complete</h3>
+                <p class="text-xs text-emerald-700 mt-1">Your patient account and statutory HIPAA consent have been legally executed.</p>
               </div>
 
-              <!-- Cryptographic Audit Ledger Card -->
-              <div class="bg-slate-900 rounded-xl p-3.5 text-slate-200 text-[11px] font-mono space-y-2">
-                <div class="flex items-center justify-between border-b border-slate-700 pb-1.5 text-[10px] text-teal-400 uppercase font-bold">
-                  <span>🔐 Immutable Audit Proof Record</span>
-                  <span>SHA-256 Verified</span>
+              <!-- Patient Account Summary Card -->
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-2.5 text-slate-700">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                  <span class="font-bold text-slate-800 text-xs">Patient Account Summary</span>
+                  <span class="bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Active</span>
                 </div>
-                <div class="flex justify-between"><span class="text-slate-400">Signed By:</span> <span class="text-white">{{ registeredConsentAudit?.signedBy }}</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Patient MRN:</span> <span class="text-teal-300">{{ registeredConsentAudit?.mrn }}</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Timestamp:</span> <span class="text-slate-300">{{ registeredConsentAudit?.timestamp }}</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Consent Codex:</span> <span class="text-slate-300">{{ registeredConsentAudit?.consentVersion }}</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Client IP:</span> <span class="text-emerald-400">{{ registeredConsentAudit?.auditProof?.ipAddress }}</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Device Fingerprint:</span> <span class="text-slate-300">{{ registeredConsentAudit?.auditProof?.deviceType }} ({{ registeredConsentAudit?.auditProof?.screenResolution }})</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Timezone / Locale:</span> <span class="text-slate-300">{{ registeredConsentAudit?.auditProof?.timezone }} / {{ registeredConsentAudit?.auditProof?.locale }}</span></div>
+                <div class="flex justify-between py-0.5">
+                  <span class="text-slate-500">Legal Name:</span>
+                  <span class="font-bold text-slate-900">{{ regForm.fullName }}</span>
+                </div>
+                <div class="flex justify-between py-0.5">
+                  <span class="text-slate-500">Medical Record Number (MRN):</span>
+                  <span class="font-mono font-bold text-blue-700">{{ regForm.mrn }}</span>
+                </div>
+                <div class="flex justify-between py-0.5">
+                  <span class="text-slate-500">Registered Email:</span>
+                  <span class="text-slate-800 font-mono text-[11px]">{{ regForm.email }}</span>
+                </div>
+                <div class="flex justify-between py-0.5">
+                  <span class="text-slate-500">Consent Attestation:</span>
+                  <span class="text-emerald-700 font-semibold flex items-center gap-1">
+                    <span>✓</span> Verified & Electronically Signed
+                  </span>
+                </div>
+              </div>
+
+              <!-- Secure Backend Audit Vault Notice -->
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-[11px] text-blue-900 flex items-start gap-2.5">
+                <span class="text-base leading-none mt-0.5">🔒</span>
+                <div class="leading-relaxed">
+                  <span class="font-bold block text-blue-950 mb-0.5">Cryptographically Sealed & Stored</span>
+                  Your statutory consent, electronic signature, and verification audit trail have been encrypted and permanently archived directly into our backend HIPAA compliance vault.
+                </div>
               </div>
 
               <button (click)="completeRegistrationAndLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-sm text-xs transition-colors cursor-pointer">
-                Launch Patient Health Portal ➔
+                Enter Patient Health Portal ➔
               </button>
             </div>
 
