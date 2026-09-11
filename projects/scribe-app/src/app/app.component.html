@@ -2889,6 +2889,12 @@
 
             <!-- STEP 1: DEMOGRAPHICS -->
             <div *ngIf="registrationStep === 'details'" class="space-y-3.5">
+              <div class="flex justify-between items-center">
+                <span class="text-[11px] font-bold text-slate-400 uppercase">Patient Information</span>
+                <button type="button" (click)="autofillRegistration()" class="px-2.5 py-1 bg-purple-100 hover:bg-purple-200 text-purple-800 text-[10px] font-bold rounded shadow-sm transition-colors cursor-pointer">
+                  ⚡ Autofill Demo
+                </button>
+              </div>
               <div class="space-y-1">
                 <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">Full Legal Name *</label>
                 <input type="text" [(ngModel)]="regForm.fullName" placeholder="e.g. Jonathan Alexander Doe" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-500" required />

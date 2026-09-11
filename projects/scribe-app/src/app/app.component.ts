@@ -2175,6 +2175,14 @@ export class AppComponent implements OnInit {
     this.termsScrolledToBottom = false;
   }
 
+  autofillRegistration() {
+    this.regForm.fullName = 'Jane Doe';
+    this.regForm.dob = '1985-05-15';
+    this.regForm.gender = 'Female';
+    this.regForm.email = 'jane.doe@example.com';
+    this.regForm.password = 'password123';
+  }
+
   proceedToConsent() {
     if (!this.regForm.fullName || !this.regForm.email || !this.regForm.password || !this.regForm.dob) {
       this.registrationError = 'Please complete all required demographic fields.';
@@ -2404,7 +2412,7 @@ export class AppComponent implements OnInit {
         await supabase.from('fhir_bundles').insert({
           id: crypto.randomUUID(),
           session_id: sessId,
-          fhir_version: 'R4',
+          fhir_version: 'R5',
           resource_count: bundleObj.entry ? bundleObj.entry.length : 6,
           bundle: bundleObj
         });
@@ -2422,7 +2430,7 @@ export class AppComponent implements OnInit {
         await supabase.from('fhir_bundles').insert({
           id: crypto.randomUUID(),
           session_id: sessId,
-          fhir_version: 'R4',
+          fhir_version: 'R5',
           resource_count: bundleObj.entry ? bundleObj.entry.length : 6,
           bundle: bundleObj
         });
