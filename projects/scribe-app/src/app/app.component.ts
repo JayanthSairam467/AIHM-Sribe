@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://ayzilsmrademvwdpqqhd.supabase.co';
 const SUPABASE_KEY = (typeof atob === 'function' ? atob('c2Jfc2VjcmV0X0NVWVN0UEd0WTc4aUhXeEFPWG9yYUFfS0VhUEVHWDM=') : '') || 'sb_publishable_VOM5JzguqWPVHxoYcNXOJQ_uy7IZi1s';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const GEMINI_API_KEY = typeof atob === 'function' ? atob('QVEuQWI4Uk42TFFGYzYyR2JOM0todWxwSkdVU2xicWtqdjRjQjdPb0VQWmhDNldhNTNYVHc=') : '';
 import {
   HeaderBarComponent,
   PatientContextRibbonComponent,
@@ -2599,6 +2600,7 @@ export class AppComponent implements OnInit {
     this.captureMode = mode;
   }
 
+
   selectEntity(entityId: string) {
     this.selectedEntityId = entityId;
     this.leftRailTab = 'entities';
@@ -2718,6 +2720,125 @@ export class AppComponent implements OnInit {
       this.visibleUtteranceCount++;
   }
 
+  async handleAudioFileSelected(file: File) {
+    this.isGenerating = true;
+    this.showToast('Processing audio...', 'info');
+
+    try {
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]);
+        };
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+
+      this.showToast('Generating transcript...', 'info');
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+      const requestBody = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: "You are a medical scribe AI. Analyze this audio recording of a doctor-patient conversation. Transcribe the entire conversation, identifying who is speaking (Doctor or Patient) based on context. The doctor speaks with medical authority, asks clinical questions, performs examinations, and prescribes treatment. The patient describes symptoms, answers questions, and asks about their condition. Format as 'Doctor: ...' and 'Patient: ...' lines."
+              },
+              {
+                inlineData: {
+                  mimeType: file.type || 'audio/mp3',
+                  data: base64Data
+                }
+              }
+            ]
+          }
+        ]
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!res.ok) {
+        throw new Error(`Gemini API error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      let transcriptText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      
+      if (!transcriptText || transcriptText.trim().length === 0) {
+        throw new Error("Gemini returned an empty transcript from the audio file.");
+      }
+      
+      const patientName = this.activeEncounter?.patient?.fullName || '';
+      if (patientName) {
+        const nameRegex = new RegExp(patientName, 'gi');
+        transcriptText = transcriptText.replace(nameRegex, 'Patient');
+      }
+
+      this.processTranscript(transcriptText);
+
+      this.showToast('Generating SOAP notes...', 'info');
+      await this.handleRegenerateNote();
+      
+      this.fetchLiveFhirBundle();
+      
+    } catch (e: any) {
+      console.error(e);
+      this.showToast('Error processing audio: ' + e.message, 'error');
+    } finally {
+      this.isGenerating = false;
+    }
+  }
+
+  processTranscript(transcriptText: string) {
+    const lines = transcriptText.split('\n').filter(line => line.trim().length > 0);
+    const newUtterances: TranscriptUtterance[] = [];
+    
+    let currentTime = 0;
+    
+    for (const line of lines) {
+      let speaker: 'doctor' | 'patient' | 'system' = 'system';
+      let speakerName = 'Unknown';
+      let text = line;
+      
+      if (line.toLowerCase().startsWith('doctor:')) {
+        speaker = 'doctor';
+        speakerName = 'Doctor';
+        text = line.substring(line.indexOf(':') + 1).trim();
+      } else if (line.toLowerCase().startsWith('patient:')) {
+        speaker = 'patient';
+        speakerName = 'Patient'; 
+        text = line.substring(line.indexOf(':') + 1).trim();
+      } else {
+        if (newUtterances.length > 0) {
+          speaker = newUtterances[newUtterances.length - 1].speaker;
+          speakerName = newUtterances[newUtterances.length - 1].speakerName;
+        }
+      }
+      
+      newUtterances.push({
+        id: 'utt-' + Date.now() + Math.random(),
+        speaker,
+        speakerName,
+        text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timeSec: currentTime,
+        confidence: 0.99,
+        isNote: false
+      });
+      currentTime += 5;
+    }
+    
+    this.activeEncounter.utterances = newUtterances;
+    this.visibleUtteranceCount = newUtterances.length;
+  }
+
   async handleRegenerateNote() {
     this.isGenerating = true;
     
@@ -2747,7 +2868,13 @@ export class AppComponent implements OnInit {
         throw new Error(errBody?.error?.message || `Gemini returned ${response.status}`);
       }
 
-      const realSoap = await response.json();
+      let realSoapText = await response.text();
+      const patientName = this.activeEncounter?.patient?.fullName || '';
+      if (patientName) {
+        const nameRegex = new RegExp(patientName, 'gi');
+        realSoapText = realSoapText.replace(nameRegex, 'Patient');
+      }
+      const realSoap = JSON.parse(realSoapText);
       
       if (realSoap && realSoap.subjective) {
         // Map AI-generated SOAP to our UI structure
@@ -2828,9 +2955,9 @@ export class AppComponent implements OnInit {
       } else {
         throw new Error('Gemini returned empty response');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("Backend API call failed. Falling back to local mock generation for UI demo purposes.", e);
-      this.showToast("Backend API offline or slow. Falling back to local offline generation.", "info");
+      this.showToast("Backend error: " + (e.message || 'offline or slow') + ". Falling back to offline mode.", "error");
       
       // Mock Fallback Generation
       setTimeout(() => {

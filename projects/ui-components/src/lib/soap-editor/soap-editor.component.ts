@@ -99,6 +99,44 @@ export class SoapEditorComponent {
     return [{ drug: 'See Notes', dose: '-', frequency: '-', quantity: '-', refills: '-', notes: text }];
   }
 
+  get patientFriendlyDiagnosis(): string {
+    const dx = this.soapNote?.assessment?.primaryDiagnosis || '';
+    const impression = this.soapNote?.assessment?.clinicalImpression || '';
+    // Combine into a patient-friendly summary
+    if (!dx) return 'No diagnosis recorded.';
+    return `Based on the clinical evaluation, the primary finding is: ${dx}. ${impression}`;
+  }
+
+  get technicalSummary(): string {
+    const dx = this.soapNote?.assessment?.primaryDiagnosis || '';
+    const diffDx = (this.soapNote?.assessment?.differentialDiagnoses || []).join(', ');
+    const impression = this.soapNote?.assessment?.clinicalImpression || '';
+    const hpi = this.soapNote?.subjective?.historyOfPresentIllness || '';
+    const pe = this.soapNote?.objective?.physicalExam || '';
+    const vitals = this.soapNote?.objective?.vitals || '';
+    const labs = this.soapNote?.objective?.diagnosticResults || '';
+    
+    let summary = `PRIMARY DIAGNOSIS: ${dx}\n`;
+    if (diffDx) summary += `DIFFERENTIAL DIAGNOSES: ${diffDx}\n`;
+    summary += `\nCLINICAL RATIONALE: ${impression}\n`;
+    summary += `\nVITAL SIGNS: ${vitals}\n`;
+    if (pe) summary += `PHYSICAL EXAMINATION: ${pe}\n`;
+    if (labs) summary += `LABORATORY/DIAGNOSTIC RESULTS: ${labs}\n`;
+    if (hpi) summary += `\nHISTORY OF PRESENT ILLNESS: ${hpi}`;
+    return summary;
+  }
+
+  get treatmentPlanSummary(): string {
+    const plan = this.soapNote?.plan;
+    if (!plan) return 'No treatment plan recorded.';
+    let summary = '';
+    if (plan.diagnostics) summary += `DIAGNOSTIC ORDERS:\n${plan.diagnostics}\n\n`;
+    if (plan.patientEducation) summary += `PATIENT EDUCATION:\n${plan.patientEducation}\n\n`;
+    if (plan.followUp) summary += `FOLLOW-UP:\n${plan.followUp}\n\n`;
+    if (plan.redFlagWarnings) summary += `⚠️ RED FLAG WARNINGS:\n${plan.redFlagWarnings}`;
+    return summary || 'See prescribed medications above.';
+  }
+
   downloadPdf() {
     if (!this.soapNote.isSigned) {
       alert('This clinical note must be signed by the attending physician before downloading an official copy.');

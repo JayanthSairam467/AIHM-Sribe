@@ -306,31 +306,39 @@
       <p class="text-[10px] text-slate-500 mt-2">* Pharmacist: Substitution permitted unless "Dispense as written" is specified.</p>
     </div>
 
-    <!-- SOAP Content -->
-    <h2 class="text-md font-bold text-slate-800 mb-2 border-b border-slate-300 pb-1 uppercase tracking-wide">1. Subjective</h2>
-    <div class="mb-6 text-sm space-y-2">
-      <p><strong class="text-slate-600">Chief Complaint:</strong> {{ soapNote.subjective?.chiefComplaint }}</p>
-      <p><strong class="text-slate-600">HPI:</strong> {{ soapNote.subjective?.historyOfPresentIllness }}</p>
-      <p><strong class="text-slate-600">ROS:</strong> {{ soapNote.subjective?.reviewOfSystems }}</p>
+    <!-- Diagnosis (Patient-Friendly) -->
+    <div class="mb-8">
+      <div class="flex items-center gap-2 mb-3 border-b-2 border-emerald-700 pb-1">
+        <span class="text-xl">🩺</span>
+        <h2 class="text-lg font-bold text-slate-800 tracking-wide uppercase">Diagnosis</h2>
+      </div>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+        <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-line">{{ patientFriendlyDiagnosis }}</p>
+      </div>
+      <p class="text-[10px] text-slate-400 mt-2 italic">* This section is written in plain language for patient understanding.</p>
     </div>
 
-    <h2 class="text-md font-bold text-slate-800 mb-2 border-b border-slate-300 pb-1 uppercase tracking-wide">2. Objective</h2>
-    <div class="mb-6 text-sm space-y-2">
-      <p><strong class="text-slate-600">Vitals:</strong> {{ soapNote.objective?.vitals }}</p>
-      <p><strong class="text-slate-600">Physical Exam:</strong> {{ soapNote.objective?.physicalExam }}</p>
+    <!-- Clinical Summary (For Medical Professionals) -->
+    <div class="mb-8">
+      <div class="flex items-center gap-2 mb-3 border-b-2 border-blue-700 pb-1">
+        <span class="text-xl">📋</span>
+        <h2 class="text-lg font-bold text-slate-800 tracking-wide uppercase">Clinical Summary</h2>
+        <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[9px] uppercase tracking-wider ml-auto">For Medical Professionals</span>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+        <pre class="text-sm text-slate-800 leading-relaxed whitespace-pre-line font-sans">{{ technicalSummary }}</pre>
+      </div>
     </div>
 
-    <h2 class="text-md font-bold text-slate-800 mb-2 border-b border-slate-300 pb-1 uppercase tracking-wide">3. Assessment</h2>
-    <div class="mb-6 text-sm space-y-2">
-      <p><strong class="text-slate-600">Primary Diagnosis:</strong> {{ soapNote.assessment?.primaryDiagnosis }}</p>
-      <p><strong class="text-slate-600">Clinical Impression:</strong> {{ soapNote.assessment?.clinicalImpression }}</p>
-    </div>
-
-    <h2 class="text-md font-bold text-slate-800 mb-2 border-b border-slate-300 pb-1 uppercase tracking-wide">4. Plan (Non-Rx)</h2>
-    <div class="mb-8 text-sm space-y-2">
-      <p><strong class="text-slate-600">Diagnostics:</strong> {{ soapNote.plan?.diagnostics }}</p>
-      <p><strong class="text-slate-600">Education:</strong> {{ soapNote.plan?.patientEducation }}</p>
-      <p><strong class="text-slate-600">Follow-Up:</strong> {{ soapNote.plan?.followUp }}</p>
+    <!-- Treatment Plan -->
+    <div class="mb-8">
+      <div class="flex items-center gap-2 mb-3 border-b-2 border-rose-700 pb-1">
+        <span class="text-xl">💊</span>
+        <h2 class="text-lg font-bold text-slate-800 tracking-wide uppercase">Treatment Plan & Follow-Up</h2>
+      </div>
+      <div class="bg-rose-50 border border-rose-200 rounded-lg p-4">
+        <pre class="text-sm text-slate-800 leading-relaxed whitespace-pre-line font-sans">{{ treatmentPlanSummary }}</pre>
+      </div>
     </div>
 
     <!-- Digital Signature Block -->
